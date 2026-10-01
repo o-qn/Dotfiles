@@ -1,0 +1,39 @@
+# Caches, logs and temporary files
+.cache/
+__pycache__/
+*.py[cod]
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Local backups, reports and archives
+backups/
+installation.json
+*-installation.json
+sync-expected.json
+*.zip
+*.tar
+*.tar.gz
+
+# Local credentials and tooling state
+.env
+.env.*
+!.env.example
+secrets.*
+/.ssh/
+/.aws/
+/.codex/
+
+# Runtime state; keep the clean Noctalia override seed
+/.local/state/*
+!/.local/state/noctalia/
+/.local/state/noctalia/*
+!/.local/state/noctalia/settings.toml
+
+# Regenerated COSMIC themes and GTK styles
+/.config/cosmic/com.system76.CosmicTheme.*/
+/.config/gtk-3.0/noctalia.css
+/.config/gtk-4.0/noctalia.css

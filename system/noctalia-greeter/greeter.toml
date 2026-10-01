@@ -1,0 +1,25 @@
+# Tokyo Night login screen for Noctalia Greeter 1.5.
+[session]
+default = "Hyprland"
+
+[user]
+default = "@USER@"
+
+[appearance]
+password_style = "default"
+hide_logo = true
+scheme_selector_position = "hidden"
+power_buttons_position = "bottom-right"
+
+[idle]
+timeout = 300
+
+[keyboard]
+layout = "us,ara"
+options = "grp:win_space_toggle"
+numlock = true
+
+[cursor]
+theme = "default"
+size = 24
+path = "/usr/share/icons"

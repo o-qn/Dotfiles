@@ -1,0 +1,3 @@
+# Preferences are stored in .config/noctalia/config.toml.
+# Subsequent GUI edits are local runtime overrides.
+config_version = 14
