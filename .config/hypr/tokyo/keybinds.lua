@@ -14,7 +14,7 @@ local scripts = '"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/desktop.sh" '
 -- Your original muscle memory.
 cmd("SUPER + Q", "kitty", "Open terminal")
 bind("SUPER + C", hl.dsp.window.close(), "Close focused window")
-cmd("SUPER + E", "bash " .. scripts .. "files", "Open Yazi")
+cmd("SUPER + E", "bash " .. scripts .. "files", "Open PCManFM-Qt")
 cmd("SUPER + B", "zen-browser", "Open Zen Browser")
 shell("SUPER + R", "panel-toggle launcher", "Application launcher")
 shell("SUPER + V", "panel-toggle clipboard", "Clipboard history")
@@ -77,3 +77,6 @@ shell("XF86AudioPlay", "media toggle", "Play / pause", { locked = true })
 shell("XF86AudioPause", "media toggle", "Play / pause", { locked = true })
 shell("XF86MonBrightnessUp", "brightness-up", "Brightness up", { locked = true, repeating = true })
 shell("XF86MonBrightnessDown", "brightness-down", "Brightness down", { locked = true, repeating = true })
+
+-- Keep a usable desktop when the portrait display is powered off.
+bind("SUPER + CTRL + M", tokyo_toggle_portrait, "Toggle portrait monitor")

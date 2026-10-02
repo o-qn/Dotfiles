@@ -5,3 +5,11 @@ local root = os.getenv("TOKYO_NIGHT_CONFIG_ROOT")
 for _, module in ipairs({ "monitors", "appearance", "input", "rules", "keybinds", "autostart" }) do
     dofile(root .. "/tokyo/" .. module .. ".lua")
 end
+
+-- Noctalia renders this module whenever the palette changes.
+local colors = io.open(root .. "/noctalia.lua", "r")
+if colors then
+    colors:close()
+    package.path = root .. "/?.lua;" .. package.path
+    require("noctalia").apply_theme()
+end

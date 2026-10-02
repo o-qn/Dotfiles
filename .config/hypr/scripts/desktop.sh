@@ -3,7 +3,7 @@ set -euo pipefail
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
 case "${1:-help}" in
   files)
-    exec kitty -e yazi "${2:-$HOME}"
+    exec env QT_QPA_PLATFORMTHEME=qt6ct pcmanfm-qt "${2:-$HOME}"
     ;;
   help)
     exec python3 "$config_root/scripts/shortcuts.py"
@@ -25,7 +25,7 @@ case "${1:-help}" in
     ;;
   doctor)
     printf '\033[38;2;122;162;247mTOKYO NIGHT · DESKTOP CHECK\033[0m\n\n'
-    for app in Hyprland hyprctl noctalia kitty zen-browser yazi qt6ct; do
+    for app in Hyprland hyprctl noctalia kitty zen-browser pcmanfm-qt qt6ct; do
       if command -v "$app" >/dev/null; then printf '  OK       %s\n' "$app"; else printf '  MISSING  %s\n' "$app"; fi
     done
     printf '\nHyprland configuration:\n'

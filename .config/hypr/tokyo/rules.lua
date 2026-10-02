@@ -5,7 +5,7 @@ hl.window_rule({
     no_blur = false,
 })
 hl.window_rule({
-    name = "cosmic-files-glass", match = { class = "^com[.]system76[.]CosmicFiles$" },
+    name = "pcmanfm-glass", match = { class = "^pcmanfm-qt$" },
     no_blur = false, opacity = "0.90 override 0.84 override 1.0 override",
 })
 hl.window_rule({ name = "suppress-maximize", match = { class = ".*" }, suppress_event = "maximize" })

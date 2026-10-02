@@ -1,6 +1,6 @@
 # Tokyo Night dotfiles
 
-CachyOS · Hyprland 0.56 · Noctalia 5 · Kitty · COSMIC Files · Zen.
+CachyOS · Hyprland 0.56 · Noctalia 5 · Kitty · PCManFM-Qt · Zen.
 Requires Python 3.11+ and the desktop apps installed.
 
 ```bash
@@ -13,5 +13,6 @@ bash scripts/apply-theme.sh
 Existing configs are backed up; GUI overrides are reset to the saved preferences.
 Restore with `python3 install.py --restore /path/to/BACKUP`.
 
+Super+Ctrl+M toggles the portrait display; disconnects fall back automatically.
 Adjust `.config/hypr/tokyo/monitors.lua` for your displays.
 Optional greeter/timezone templates: `system/`.

@@ -16,11 +16,6 @@ enable_community_templates = false
 
 [theme.templates.user]
 
-[theme.templates.user.cosmic]
-input_path = "templates/cosmic/palette.json"
-output_path = "$XDG_CACHE_HOME/noctalia/cosmic-palette.json"
-post_hook = "python3 '{{ config_dir }}/templates/cosmic/apply.py' \"${XDG_CACHE_HOME:-$HOME/.cache}/noctalia/cosmic-palette.json\""
-hook_async = false
 
 [shell]
 font_family = "Noto Sans"
@@ -37,7 +32,7 @@ speed = 1.15
 [shell.launcher]
 app_grid = false
 sort_by_usage = true
-pinned = ["kitty", "zen-browser", "com.system76.CosmicFiles"]
+pinned = ["kitty", "zen-browser", "pcmanfm-qt"]
 
 [shell.panel]
 transparency_mode = "glass"
@@ -111,7 +106,7 @@ color = "primary"
 tooltip = "New workspace on the main monitor"
 
 [widget.workspace-add-main.actions]
-left = "exec python3 \"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/workspace.py\" new --monitor DP-2"
+left = "exec python3 \"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/workspace.py\" new --monitor G2721P"
 
 [widget.workspace-add-portrait]
 type = "custom_button"
@@ -120,7 +115,7 @@ color = "primary"
 tooltip = "New workspace on the portrait monitor"
 
 [widget.workspace-add-portrait.actions]
-left = "exec python3 \"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/workspace.py\" new --monitor DP-3"
+left = "exec python3 \"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/workspace.py\" new --monitor Sceptre"
 
 [widget.clock]
 timezone = "Asia/Amman"
@@ -274,3 +269,10 @@ show_media = true
 show_session_buttons = true
 show_unlock_hint = true
 show_weather = true
+
+# Sync the compositor accent after each Noctalia palette change.
+[theme.templates.user.hyprland-accent]
+input_path = "templates/hyprland/colors.lua"
+output_path = "$XDG_CONFIG_HOME/hypr/noctalia.lua"
+post_hook = "hyprctl reload"
+hook_async = false

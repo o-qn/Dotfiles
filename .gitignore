@@ -33,7 +33,9 @@ secrets.*
 /.local/state/noctalia/*
 !/.local/state/noctalia/settings.toml
 
-# Regenerated COSMIC themes and GTK styles
-/.config/cosmic/com.system76.CosmicTheme.*/
+# Generated themes and local monitor mode
+/.config/hypr/noctalia.lua
+/.config/hypr/single-monitor
+/.config/pcmanfm-qt/**/recent-files.conf
 /.config/gtk-3.0/noctalia.css
 /.config/gtk-4.0/noctalia.css

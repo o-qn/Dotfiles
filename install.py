@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parent
-CONFIG_DIRS = ('hypr', 'kitty', 'noctalia', 'btop', 'qt6ct', 'cosmic')
+CONFIG_DIRS = ('hypr', 'kitty', 'noctalia', 'btop', 'qt6ct', 'pcmanfm-qt')
 
 
 def targets(home):

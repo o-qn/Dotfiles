@@ -15,9 +15,10 @@ def create_workspace(monitor=None):
     with (runtime / "tokyo-workspace.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         monitors = query("monitors")
-        target = next((m for m in monitors if m["name"] == monitor), None) if monitor else next((m for m in monitors if m["focused"]), None)
+        target = next((m for m in monitors if m["name"] == monitor or (monitor and monitor in m.get("description", ""))), None) if monitor else None
+        target = target or next((m for m in monitors if m["focused"]), None) or next(iter(monitors), None)
         if target is None:
-            raise RuntimeError(f"Monitor unavailable: {monitor or 'focused'}")
+            raise RuntimeError(f"No active monitor available")
         used = {w["id"] for w in query("workspaces") if w["id"] > 0}
         number = 3
         while number in used:
@@ -32,6 +33,6 @@ def create_workspace(monitor=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["new"])
-    parser.add_argument("--monitor", help="Connector of the monitor whose + was clicked")
+    parser.add_argument("--monitor", help="Connector or hardware description of the bar monitor")
     arguments = parser.parse_args()
     create_workspace(arguments.monitor)
