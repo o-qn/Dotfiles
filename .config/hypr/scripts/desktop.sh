@@ -13,7 +13,7 @@ case "${1:-help}" in
       if report=$(noctalia config validate 2>&1) && ! [[ "$report" == *"WARN "* ]]; then
         hyprctl reload
         noctalia msg config-reload
-        noctalia msg notification-show "Tokyo Night" "Desktop configuration reloaded."
+        noctalia msg notification-show "Desktop" "Desktop configuration reloaded."
       else
         noctalia msg notification-show "Noctalia configuration needs attention" "$report"
         exit 1
@@ -24,7 +24,7 @@ case "${1:-help}" in
     fi
     ;;
   doctor)
-    printf '\033[38;2;122;162;247mTOKYO NIGHT · DESKTOP CHECK\033[0m\n\n'
+    printf '\033[38;2;122;162;247mDESKTOP CHECK\033[0m\n\n'
     for app in Hyprland hyprctl noctalia kitty zen-browser pcmanfm-qt qt6ct; do
       if command -v "$app" >/dev/null; then printf '  OK       %s\n' "$app"; else printf '  MISSING  %s\n' "$app"; fi
     done

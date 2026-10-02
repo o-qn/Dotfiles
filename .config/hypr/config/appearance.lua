@@ -1,3 +1,4 @@
+-- Fallback colors; Noctalia applies the selected palette after this module.
 hl.config({
     general = {
         gaps_in = 5, gaps_out = 10, border_size = 2,
@@ -28,13 +29,13 @@ hl.config({
         },
     },
 })
-hl.curve("tokyoEase", { type = "bezier", points = { { 0.22, 1 }, { 0.36, 1 } } })
-hl.curve("tokyoQuick", { type = "bezier", points = { { 0.15, 0 }, { 0.10, 1 } } })
-hl.animation({ leaf = "global", enabled = true, speed = 4, bezier = "tokyoEase" })
-hl.animation({ leaf = "border", enabled = true, speed = 3, bezier = "tokyoEase" })
-hl.animation({ leaf = "windows", enabled = true, speed = 3.5, bezier = "tokyoEase" })
-hl.animation({ leaf = "windowsIn", enabled = true, speed = 3, bezier = "tokyoEase", style = "popin 96%" })
-hl.animation({ leaf = "windowsOut", enabled = true, speed = 2, bezier = "tokyoQuick", style = "popin 96%" })
-hl.animation({ leaf = "fade", enabled = true, speed = 2.5, bezier = "tokyoQuick" })
-hl.animation({ leaf = "layers", enabled = true, speed = 3, bezier = "tokyoEase" })
-hl.animation({ leaf = "workspaces", enabled = true, speed = 3, bezier = "tokyoEase", style = "slide" })
+hl.curve("desktopEase", { type = "bezier", points = { { 0.22, 1 }, { 0.36, 1 } } })
+hl.curve("desktopQuick", { type = "bezier", points = { { 0.15, 0 }, { 0.10, 1 } } })
+hl.animation({ leaf = "global", enabled = true, speed = 4, bezier = "desktopEase" })
+hl.animation({ leaf = "border", enabled = true, speed = 3, bezier = "desktopEase" })
+hl.animation({ leaf = "windows", enabled = true, speed = 3.5, bezier = "desktopEase" })
+hl.animation({ leaf = "windowsIn", enabled = true, speed = 3, bezier = "desktopEase", style = "popin 96%" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 2, bezier = "desktopQuick", style = "popin 96%" })
+hl.animation({ leaf = "fade", enabled = true, speed = 2.5, bezier = "desktopQuick" })
+hl.animation({ leaf = "layers", enabled = true, speed = 3, bezier = "desktopEase" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 3, bezier = "desktopEase", style = "slide" })

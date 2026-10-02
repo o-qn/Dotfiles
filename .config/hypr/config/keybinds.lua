@@ -42,7 +42,7 @@ shell("ALT + TAB", "window-switcher", "Window switcher")
 shell("CTRL + ALT + F", "screenshot-fullscreen", "Screenshot focused monitor")
 shell("CTRL + ALT + A", "screenshot-annotate", "Freeze screen and annotate")
 cmd("SUPER + F1", "bash " .. scripts .. "help", "Search keyboard shortcuts")
-cmd("SUPER + CTRL + Q", "kitty --class tokyo-doctor -e bash " .. scripts .. "doctor", "Desktop health check")
+cmd("SUPER + CTRL + Q", "kitty --class desktop-doctor -e bash " .. scripts .. "doctor", "Desktop health check")
 cmd("SUPER + ESCAPE", "kitty -e btop", "System monitor")
 cmd("SUPER + SHIFT + R", "bash " .. scripts .. "reload", "Validate and reload configuration")
 
@@ -79,4 +79,4 @@ shell("XF86MonBrightnessUp", "brightness-up", "Brightness up", { locked = true, 
 shell("XF86MonBrightnessDown", "brightness-down", "Brightness down", { locked = true, repeating = true })
 
 -- Keep a usable desktop when the portrait display is powered off.
-bind("SUPER + CTRL + M", tokyo_toggle_portrait, "Toggle portrait monitor")
+bind("SUPER + CTRL + M", toggle_portrait_monitor, "Toggle portrait monitor")

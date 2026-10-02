@@ -39,3 +39,7 @@ secrets.*
 /.config/pcmanfm-qt/**/recent-files.conf
 /.config/gtk-3.0/noctalia.css
 /.config/gtk-4.0/noctalia.css
+
+# Browser profiles contain personal data; only the theme templates are tracked.
+/.config/zen/
+/.zen/

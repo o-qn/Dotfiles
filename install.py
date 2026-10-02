@@ -52,7 +52,7 @@ def remove(path):
 
 def backup(home):
     stamp = datetime.datetime.now().astimezone().strftime('%Y%m%d-%H%M%S-%f')
-    folder = home / '.local/state/tokyo-night-dotfiles/backups' / stamp
+    folder = home / '.local/state/desktop-dotfiles/backups' / stamp
     folder.mkdir(parents=True, mode=0o700)
     entries = []
     for i, target in enumerate(targets(home)):
@@ -93,10 +93,10 @@ def validate():
     for command in ('Hyprland', 'noctalia'):
         if not shutil.which(command):
             raise SystemExit(f'Missing {command}; install desktop dependencies first.')
-    with tempfile.TemporaryDirectory(prefix='tokyo-dotfiles-check-') as directory:
+    with tempfile.TemporaryDirectory(prefix='desktop-dotfiles-check-') as directory:
         home = Path(directory)
         deploy(home)
-        env = dict(os.environ, TOKYO_NIGHT_CONFIG_ROOT=str(home / '.config/hypr'))
+        env = dict(os.environ, HYPR_CONFIG_ROOT=str(home / '.config/hypr'))
         subprocess.run(['Hyprland', '--verify-config', '-c', str(home / '.config/hypr/hyprland.lua')], env=env, check=True)
         result = subprocess.run(['noctalia', 'config', 'validate', str(home / '.config/noctalia/config.toml')], capture_output=True, text=True, check=True)
         print(result.stdout, end='')

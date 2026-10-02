@@ -12,7 +12,7 @@ def query(command):
 
 def create_workspace(monitor=None):
     runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
-    with (runtime / "tokyo-workspace.lock").open("w") as lock:
+    with (runtime / "desktop-workspace.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         monitors = query("monitors")
         target = next((m for m in monitors if m["name"] == monitor or (monitor and monitor in m.get("description", ""))), None) if monitor else None

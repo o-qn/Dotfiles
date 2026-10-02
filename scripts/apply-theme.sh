@@ -9,4 +9,4 @@ if command -v gsettings >/dev/null; then
     gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark
     gsettings set org.gnome.desktop.interface icon-theme Papirus-Dark
 fi
-printf 'Noctalia templates applied. Reopen Qt apps if colors do not refresh.\n'
+printf 'Noctalia templates applied. Restart Zen; reopen Qt apps if colors do not refresh.\n'

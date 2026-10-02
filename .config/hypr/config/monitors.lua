@@ -1,5 +1,5 @@
 -- Match hardware descriptions; portrait LEFT, main RIGHT.
-local root = os.getenv("TOKYO_NIGHT_CONFIG_ROOT")
+local root = os.getenv("HYPR_CONFIG_ROOT")
     or ((os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")) .. "/hypr")
 local marker = root .. "/single-monitor"
 local saved = io.open(marker, "r")
@@ -61,7 +61,7 @@ for _, event in ipairs({ "hyprland.start", "config.reloaded", "monitor.layout_ch
     hl.on(event, schedule_sync)
 end
 
-function tokyo_toggle_portrait()
+function toggle_portrait_monitor()
     local main = find_displays()
     if not main_only and not main then
         hl.exec_cmd("noctalia msg notification-show 'Displays' 'Keep the remaining monitor enabled'")
