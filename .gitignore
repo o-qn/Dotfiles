@@ -43,3 +43,8 @@ secrets.*
 # Browser profiles contain personal data; only the theme templates are tracked.
 /.config/zen/
 /.zen/
+
+# Generated Neovim palette and editor state
+/.config/nvim/lua/noctalia_palette.lua
+/.config/nvim/.lazy/
+/.config/nvim/lazyvim.json.bak

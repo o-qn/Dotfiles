@@ -1,7 +1,7 @@
 # Desktop dotfiles
 
-CachyOS · Hyprland 0.56 · Noctalia 5 · Kitty · PCManFM-Qt · Zen.
-Requires Python 3.11+ and the desktop apps installed.
+CachyOS · Hyprland 0.56 · Noctalia 5 · Kitty · PCManFM-Qt · Zen · LazyVim.
+Requires Python 3.11+, Node.js and the desktop apps installed.
 
 ```bash
 python3 install.py --check

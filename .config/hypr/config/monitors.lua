@@ -9,7 +9,7 @@ local main_desc = "desc:HKC OVERSEAS LIMITED G2721P 0000000000001"
 local portrait_desc = "desc:Sceptre Tech Inc Sceptre L24 0000000000000"
 
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
-hl.monitor({ output = main_desc, mode = "2560x1440@200Hz", position = "0x0", scale = 1.25, vrr = 2 })
+hl.monitor({ output = main_desc, mode = "2560x1440@200Hz", position = "0x0", scale = 1.25, vrr = 2, bitdepth = 10 })
 hl.monitor({ output = portrait_desc, mode = "1920x1080@60Hz", position = "-1080x-384",
     scale = 1, transform = 1, vrr = 2, disabled = main_only })
 hl.workspace_rule({ workspace = "1", monitor = main_desc, default = true, persistent = true })
