@@ -6,7 +6,7 @@ order = [ "default" ]
     background_opacity = 0.68000000000000005
     border = "outline"
     border_width = 1
-    center = [ "clock" ]
+    center = [ "clock", "cat" ]
     concave_edge_corners = false
     end = [ "tray", "keyboard_layout", "network", "media", "volume", "notifications", "bluetooth", "control-center" ]
     margin_edge = 8
@@ -25,11 +25,18 @@ order = [ "default" ]
     thickness = 38
     widget_spacing = 8
 
+        [bar.default.monitor."Sceptre L24"]
+        end = [ "tray", "keyboard_layout", "network", "volume", "notifications", "bluetooth", "control-center" ]
+        start = [ "launcher", "workspaces", "workspace-add-portrait", "active_window" ]
+
         [bar.default.monitor.secondary]
         center = [ "clock" ]
         end = [ "keyboard_layout", "volume", "notifications", "control-center" ]
         match = "Sceptre L24"
         start = [ "launcher", "workspaces", "workspace-add-portrait" ]
+
+[brightness]
+enable_ddcutil = true
 
 [desktop_widgets]
 schema_version = 2
@@ -146,6 +153,9 @@ position = "top_right"
 background_opacity = 0.71999999999999997
 position = "bottom_center"
 
+[plugins]
+enabled = [ "noctalia/wallhaven", "noctalia/mpvpaper", "noctalia/bongocat", "noctalia/bitwarden" ]
+
 [shell]
 clipboard_enabled = true
 clipboard_history_max_entries = 150
@@ -163,7 +173,7 @@ time_format = "{:%-I:%M %p}"
 
     [shell.launcher]
     app_grid = false
-    pinned = [ "kitty", "zen-browser", "pcmanfm-qt" ]
+    pinned = [ "kitty", "zen-browser", "org.kde.dolphin" ]
     sort_by_usage = true
 
     [shell.panel]
@@ -182,15 +192,16 @@ time_format = "{:%-I:%M %p}"
     show_cursor = false
 
 [theme]
-builtin = "Nord"
-community_palette = "Rosey AMOLED"
+builtin = "Dracula"
+community_palette = "Ayu Green"
 custom_palette = "TokyoNight"
 mode = "dark"
-source = "builtin"
-wallpaper_scheme = "m3-fruit-salad"
+source = "wallpaper"
+wallpaper_scheme = "m3-content"
 
     [theme.templates]
-    builtin_ids = [ "kitty", "gtk3", "gtk4", "qt", "kcolorscheme", "btop" ]
+    builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "qt" ]
+    community_ids = [ "discord", "steam" ]
     enable_builtin_templates = true
     enable_community_templates = false
 
@@ -200,6 +211,22 @@ wallpaper_scheme = "m3-fruit-salad"
         output_path = "$XDG_CONFIG_HOME/hypr/noctalia.lua"
         post_hook = "hyprctl reload"
 
+        [theme.templates.user.neovim]
+        input_path = "templates/neovim/palette.lua"
+        output_path = "$XDG_CONFIG_HOME/nvim/lua/noctalia_palette.lua"
+
+        [theme.templates.user.zen-browser-chrome]
+        hook_async = false
+        input_path = "templates/zen-browser/zen-userChrome.css"
+        output_path = "$XDG_CACHE_HOME/noctalia/zen-browser/zen-userChrome.css"
+        post_hook = "python3 '{{ config_dir }}/templates/zen-browser/apply.py'"
+
+        [theme.templates.user.zen-browser-content]
+        hook_async = false
+        input_path = "templates/zen-browser/zen-userContent.css"
+        output_path = "$XDG_CACHE_HOME/noctalia/zen-browser/zen-userContent.css"
+        post_hook = "python3 '{{ config_dir }}/templates/zen-browser/apply.py'"
+
 [wallpaper]
 directory = "@DATA_HOME@/wallpapers"
 enabled = true
@@ -208,16 +235,25 @@ transition = [ "fade" ]
 transition_duration = 400
 
     [wallpaper.default]
-    path = "@DATA_HOME@/wallpapers/abstract-swirls.jpg"
+    path = "@DATA_HOME@/wallpapers/tree.jpg"
 
     [wallpaper.last]
-    path = "@DATA_HOME@/wallpapers/abstract-swirls.jpg"
+    path = "@DATA_HOME@/wallpapers/tree.jpg"
 
     [wallpaper.monitors.DP-2]
-    path = "@DATA_HOME@/wallpapers/abstract-swirls.jpg"
+    path = "@DATA_HOME@/wallpapers/tree.jpg"
 
     [wallpaper.monitors.DP-3]
+    path = "@DATA_HOME@/wallpapers/tree.jpg"
+
+    [[wallpaper.favorite]]
+    palette_source = "wallpaper"
     path = "@DATA_HOME@/wallpapers/abstract-swirls.jpg"
+    theme_mode = "dark"
+    wallpaper_scheme = "m3-content"
+
+[widget.cat]
+type = "noctalia/bongocat:cat"
 
 [widget.clock]
 format = "{:%a %d %b · %-I:%M %p}"
@@ -263,21 +299,3 @@ occupied_color = "secondary"
 show_all_outputs = false
 show_labels = true
 style = "regular"
-
-# Zen reads these stylesheets at startup. Restart it after a palette change.
-[theme.templates.user.zen-browser-chrome]
-input_path = "templates/zen-browser/zen-userChrome.css"
-output_path = "$XDG_CACHE_HOME/noctalia/zen-browser/zen-userChrome.css"
-post_hook = "python3 '{{ config_dir }}/templates/zen-browser/apply.py'"
-hook_async = false
-
-[theme.templates.user.zen-browser-content]
-input_path = "templates/zen-browser/zen-userContent.css"
-output_path = "$XDG_CACHE_HOME/noctalia/zen-browser/zen-userContent.css"
-post_hook = "python3 '{{ config_dir }}/templates/zen-browser/apply.py'"
-hook_async = false
-
-# Open Neovim instances watch this file and refresh their theme automatically.
-[theme.templates.user.neovim]
-input_path = "templates/neovim/palette.lua"
-output_path = "$XDG_CONFIG_HOME/nvim/lua/noctalia_palette.lua"

@@ -1,6 +1,6 @@
 # Desktop dotfiles
 
-CachyOS · Hyprland 0.56 · Noctalia 5 · Kitty · PCManFM-Qt · Zen · LazyVim.
+CachyOS · Hyprland 0.56 · Noctalia 5 · Kitty · Dolphin · Zen · LazyVim.
 Requires Python 3.11+, Node.js and the desktop apps installed.
 
 ```bash
@@ -16,4 +16,5 @@ Restore with `python3 install.py --restore /path/to/BACKUP`.
 Super+Ctrl+M toggles the portrait display; disconnects fall back automatically.
 Adjust `.config/hypr/config/monitors.lua` for your displays.
 Restart Zen after changing Noctalia’s palette.
+External-monitor brightness: `bash scripts/setup-brightness.sh` (sudo required).
 Optional greeter/timezone templates: `system/`.

@@ -10,11 +10,12 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parent
-CONFIG_DIRS = ('hypr', 'kitty', 'noctalia', 'btop', 'qt6ct', 'pcmanfm-qt', 'nvim')
+CONFIG_DIRS = ('hypr', 'kitty', 'noctalia', 'btop', 'qt6ct', 'nvim')
 
 
 def targets(home):
     return [home / '.config' / name for name in CONFIG_DIRS] + [
+        home / '.config/dolphinrc',
         home / '.local/state/noctalia/settings.toml',
         *[home / '.local/share/wallpapers' / p.name for p in sorted((ROOT / '.local/share/wallpapers').iterdir())],
     ]
