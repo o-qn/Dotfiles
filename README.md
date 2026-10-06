@@ -17,4 +17,5 @@ Super+Ctrl+M toggles the portrait display; disconnects fall back automatically.
 Adjust `.config/hypr/config/monitors.lua` for your displays.
 Restart Zen after changing Noctalia’s palette.
 External-monitor brightness: `bash scripts/setup-brightness.sh` (sudo required).
+Bongo Cat keyboard mode: `bash scripts/setup-noctalia-plugins.sh` (sudo required).
 Optional greeter/timezone templates: `system/`.

@@ -1,4 +1,4 @@
-# Desktop preferences; install.py expands the portable paths.
+# Desktop preferences. Plugin settings live in desktop-plugins.toml.
 [bar]
 order = [ "default" ]
 
@@ -47,8 +47,6 @@ widget_order = []
     major_interval = 4
     visible = true
 
-    [desktop_widgets.widget]
-
 [dock]
 enabled = false
 
@@ -61,8 +59,9 @@ behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]
     timeout = 2700.0
 
     [idle.behavior.lock-and-suspend]
-    enabled = false
-    timeout = 0.0
+    action = "lock_and_suspend"
+    enabled = true
+    timeout = 3600.0
 
     [idle.behavior.screen-off]
     action = "screen_off"
@@ -197,10 +196,10 @@ community_palette = "Ayu Green"
 custom_palette = "TokyoNight"
 mode = "dark"
 source = "wallpaper"
-wallpaper_scheme = "m3-content"
+wallpaper_scheme = "dysfunctional"
 
     [theme.templates]
-    builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "qt" ]
+    builtin_ids = ["alacritty", "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "qt"]
     community_ids = [ "discord", "steam" ]
     enable_builtin_templates = true
     enable_community_templates = false
@@ -235,25 +234,22 @@ transition = [ "fade" ]
 transition_duration = 400
 
     [wallpaper.default]
-    path = "@DATA_HOME@/wallpapers/tree.jpg"
+    path = "@DATA_HOME@/wallpapers/wallhaven-jelq8p.jpg"
 
     [wallpaper.last]
-    path = "@DATA_HOME@/wallpapers/tree.jpg"
+    path = "@DATA_HOME@/wallpapers/wallhaven-jelq8p.jpg"
 
     [wallpaper.monitors.DP-2]
-    path = "@DATA_HOME@/wallpapers/tree.jpg"
+    path = "@DATA_HOME@/wallpapers/wallhaven-jelq8p.jpg"
 
     [wallpaper.monitors.DP-3]
-    path = "@DATA_HOME@/wallpapers/tree.jpg"
+    path = "@DATA_HOME@/wallpapers/wallhaven-jelq8p.jpg"
 
     [[wallpaper.favorite]]
     palette_source = "wallpaper"
     path = "@DATA_HOME@/wallpapers/abstract-swirls.jpg"
     theme_mode = "dark"
     wallpaper_scheme = "m3-content"
-
-[widget.cat]
-type = "noctalia/bongocat:cat"
 
 [widget.clock]
 format = "{:%a %d %b · %-I:%M %p}"

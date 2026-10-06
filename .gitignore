@@ -50,3 +50,7 @@ secrets.*
 
 # Dolphin browsing state is machine-local.
 /.local/share/dolphin/
+
+# Keep the video folder; large local wallpaper clips stay machine-local.
+/.local/share/wallpapers/videos/*
+!/.local/share/wallpapers/videos/.gitkeep

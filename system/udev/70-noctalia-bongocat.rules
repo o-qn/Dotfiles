@@ -1,0 +1,2 @@
+# Allow the active local session to read only this keyboard for Bongo Cat.
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", ENV{ID_SERIAL}=="SteelSeries_SteelSeries_Apex_7_TKL", TAG+="uaccess"

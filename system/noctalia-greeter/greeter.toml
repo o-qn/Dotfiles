@@ -1,4 +1,4 @@
-# Tokyo Night login screen for Noctalia Greeter 1.5.
+# Login screen fallback; desktop appearance sync supplies the theme.
 [session]
 default = "Hyprland"
 

@@ -1,0 +1,40 @@
+# Plugin settings shared by the panel, picker and background service.
+[plugin_settings."noctalia/mpvpaper"]
+video_directory = "@DATA_HOME@/wallpapers/videos"
+mute = true
+hardware_decode = true
+auto_pause = "full"
+run_as_systemd = false
+extract_last_frame = true
+
+[plugin_settings."noctalia/wallhaven"]
+download_dir = "@DATA_HOME@/wallpapers"
+
+[widget.cat]
+type = "noctalia/bongocat:cat"
+audio_spectrum = true
+tappy_mode = true
+rave_mode = false
+use_mpris_filter = false
+input_devices = ["/dev/input/by-id/usb-SteelSeries_SteelSeries_Apex_7_TKL*-event-kbd"]
+executable_path = "evtest"
+
+# Wallpaper pickers live inside the Control Center.
+
+[[control_center.shortcuts]]
+type = "caffeine"
+
+[[control_center.shortcuts]]
+type = "nightlight"
+
+[[control_center.shortcuts]]
+type = "notification"
+
+[[control_center.shortcuts]]
+type = "power_profile"
+
+[[control_center.shortcuts]]
+type = "noctalia/wallhaven:shortcut"
+
+[[control_center.shortcuts]]
+type = "noctalia/mpvpaper:shortcut"

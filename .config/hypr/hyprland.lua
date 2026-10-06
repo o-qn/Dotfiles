@@ -11,5 +11,4 @@ local colors = io.open(root .. "/noctalia.lua", "r")
 if colors then
     colors:close()
     package.path = root .. "/?.lua;" .. package.path
-    require("noctalia").apply_theme()
 end
