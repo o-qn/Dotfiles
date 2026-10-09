@@ -26,13 +26,41 @@ local function find_displays()
     return main, portrait, monitors[1]
 end
 
+-- Remember the portrait's last workspace across hotplug and config reloads.
+local workspace_file = root .. "/portrait-workspace"
+local portrait_workspace = 2
+local previous = io.open(workspace_file, "r")
+if previous then
+    portrait_workspace = tonumber(previous:read("*l")) or 2
+    previous:close()
+end
+local function remember_portrait(portrait)
+    local workspace = portrait and portrait.active_workspace
+    if not workspace or workspace.id <= 1 then return end
+    portrait_workspace = workspace.id
+    local file = io.open(workspace_file, "w")
+    if file then file:write(tostring(portrait_workspace), "\n"); file:close() end
+end
+local _, initial_portrait = find_displays()
+local portrait_ready = initial_portrait ~= nil
+if previous and initial_portrait and initial_portrait.active_workspace
+    and hl.get_workspace(portrait_workspace)
+    and initial_portrait.active_workspace.id ~= portrait_workspace then
+    -- A reload may re-enable the output before the Lua callbacks are installed.
+    portrait_ready = false
+elseif portrait_ready then
+    remember_portrait(initial_portrait)
+end
 local last_layout
+local restore_pending = false
 local function sync_workspace_homes()
     local main, portrait, first = find_displays()
     if not first then return end
     local home1, home2 = main or first, portrait or main or first
     local layout = home1.name .. ":" .. home2.name
-    if last_layout == layout then return end
+    local returning = portrait ~= nil and not portrait_ready
+    if last_layout == layout and (not returning or restore_pending) then return end
+    portrait_ready = false
     last_layout = layout
     -- Rebind only the two reserved workspaces; all others remain dynamic.
     hl.workspace_rule({ workspace = "1", monitor = home1.name, default = true, persistent = true })
@@ -44,7 +72,68 @@ local function sync_workspace_homes()
             hl.dispatch(hl.dsp.workspace.move({ workspace = workspace, monitor = monitor }))
         end
     end
+    if returning then
+        restore_pending = true
+        -- Workspace rules refresh asynchronously. Select the saved workspace
+        -- after that refresh, so the default cannot replace it again.
+        hl.timer(function()
+            restore_pending = false
+            local _, target = find_displays()
+            if not target then return end
+            local focused, focused_workspace
+            for _, monitor in ipairs(hl.get_monitors()) do
+                if monitor.focused then
+                    focused, focused_workspace = monitor, monitor.active_workspace
+                    break
+                end
+            end
+            local cursor = hl.get_cursor_pos()
+            local workspace = hl.get_workspace(portrait_workspace) or hl.get_workspace(2)
+            if workspace then
+                if not workspace.monitor or workspace.monitor.name ~= target.name then
+                    hl.dispatch(hl.dsp.workspace.move({ workspace = workspace, monitor = target }))
+                end
+                target:set_workspace({ workspace = workspace })
+            end
+            if focused and focused.name ~= target.name then
+                if not focused_workspace or not focused_workspace.monitor
+                    or focused_workspace.monitor.name ~= focused.name then
+                    focused_workspace = hl.get_workspace(1)
+                end
+                if focused_workspace then focused:set_workspace({ workspace = focused_workspace }) end
+                hl.dispatch(hl.dsp.focus({ monitor = focused }))
+                hl.dispatch(hl.dsp.cursor.move({ x = cursor.x, y = cursor.y }))
+            end
+            portrait_ready = true
+            remember_portrait(target)
+        end, { timeout = 350, type = "oneshot" })
+    else
+        portrait_ready = portrait ~= nil
+        if portrait_ready then remember_portrait(portrait) end
+    end
 end
+
+hl.on("workspace.active", function(workspace)
+    if not portrait_ready or not workspace.monitor then return end
+    if (workspace.monitor.description or ""):find("Sceptre L24", 1, true) then
+        local id = workspace.id
+        -- Disconnect migrations can briefly activate a replacement workspace.
+        -- Record only after the monitor transition has settled.
+        hl.timer(function()
+            local _, portrait = find_displays()
+            if portrait_ready and portrait and portrait.active_workspace
+                and portrait.active_workspace.id == id then
+                remember_portrait(portrait)
+            end
+        end, { timeout = 50, type = "oneshot" })
+    end
+end)
+hl.on("monitor.removed", function(monitor)
+    if (monitor.description or ""):find("Sceptre L24", 1, true) then portrait_ready = false end
+end)
+hl.on("monitor.added", function(monitor)
+    if (monitor.description or ""):find("Sceptre L24", 1, true) then portrait_ready = false end
+end)
 
 local pending = false
 local function schedule_sync()
@@ -62,13 +151,15 @@ for _, event in ipairs({ "hyprland.start", "config.reloaded", "monitor.layout_ch
 end
 
 function toggle_portrait_monitor()
-    local main = find_displays()
+    local main, portrait = find_displays()
     if not main_only and not main then
         hl.exec_cmd("noctalia msg notification-show 'Displays' 'Keep the remaining monitor enabled'")
         return
     end
     local next_mode = not main_only
     if next_mode then
+        remember_portrait(portrait)
+        portrait_ready = false
         local file, err = io.open(marker, "w")
         if not file then error("Cannot save monitor mode: " .. tostring(err)) end
         file:write("Main monitor only; Super+Ctrl+M restores the portrait display.\n")

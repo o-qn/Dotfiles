@@ -36,6 +36,7 @@ secrets.*
 # Generated themes and local monitor mode
 /.config/hypr/noctalia.lua
 /.config/hypr/single-monitor
+/.config/hypr/portrait-workspace
 /.config/gtk-3.0/noctalia.css
 /.config/gtk-4.0/noctalia.css
 
