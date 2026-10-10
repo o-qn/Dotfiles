@@ -31,7 +31,7 @@ type = "nightlight"
 type = "notification"
 
 [[control_center.shortcuts]]
-type = "power_profile"
+type = "qn/displays:shortcut"
 
 [[control_center.shortcuts]]
 type = "noctalia/wallhaven:shortcut"

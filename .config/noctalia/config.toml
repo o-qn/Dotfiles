@@ -153,7 +153,7 @@ background_opacity = 0.71999999999999997
 position = "bottom_center"
 
 [plugins]
-enabled = [ "noctalia/wallhaven", "noctalia/mpvpaper", "noctalia/bongocat", "noctalia/bitwarden" ]
+enabled = [ "noctalia/wallhaven", "noctalia/mpvpaper", "noctalia/bongocat", "noctalia/bitwarden", "qn/displays" ]
 
 [shell]
 clipboard_enabled = true

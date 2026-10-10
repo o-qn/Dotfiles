@@ -37,6 +37,8 @@ secrets.*
 /.config/hypr/noctalia.lua
 /.config/hypr/single-monitor
 /.config/hypr/portrait-workspace
+/.config/hypr/main-workspace
+/.config/hypr/portrait-only
 /.config/gtk-3.0/noctalia.css
 /.config/gtk-4.0/noctalia.css
 

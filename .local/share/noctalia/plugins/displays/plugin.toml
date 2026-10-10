@@ -1,0 +1,19 @@
+id = "qn/displays"
+name = "Displays"
+version = "1.0.0"
+plugin_api = 9
+author = "qn"
+license = "MIT"
+icon = "device-desktop"
+description = "Enable and disable desktop displays with workspace restoration."
+dependencies = ["hyprctl", "python3"]
+[[shortcut]]
+id = "shortcut"
+entry = "shortcut.luau"
+[[panel]]
+id = "controls"
+entry = "panel.luau"
+width = 460
+height = 350
+placement = "attached"
+position = "auto"

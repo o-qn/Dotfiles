@@ -18,6 +18,7 @@ def targets(home):
         home / '.config/dolphinrc',
         home / '.config/gwenviewrc',
         home / '.config/easyeffectsrc',
+        home / '.local/share/noctalia/plugins/displays',
         home / '.local/state/noctalia/settings.toml',
         *[home / '.local/share/wallpapers' / p.name for p in sorted((ROOT / '.local/share/wallpapers').iterdir())],
     ]

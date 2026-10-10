@@ -28,3 +28,8 @@ hl.window_rule({
 })
 -- Native Noctalia blur is preferred; this covers its layer surfaces on Hyprland.
 hl.layer_rule({ name = "noctalia-blur", match = { namespace = "noctalia.*" }, blur = true, ignore_alpha = 0.15 })
+
+-- Games open on the main display, even when launched from the portrait monitor.
+local game_monitor = "desc:HKC OVERSEAS LIMITED G2721P 0000000000001"
+hl.window_rule({ name = "steam-games-main", match = { initial_class = "^steam_app_[0-9]+$" }, monitor = game_monitor })
+hl.window_rule({ name = "native-games-main", match = { content = "game" }, monitor = game_monitor })
