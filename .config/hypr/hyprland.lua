@@ -6,9 +6,15 @@ for _, module in ipairs({ "monitors", "appearance", "input", "rules", "keybinds"
     dofile(root .. "/config/" .. module .. ".lua")
 end
 
--- Noctalia renders this module whenever the palette changes.
-local colors = io.open(root .. "/noctalia.lua", "r")
-if colors then
-    colors:close()
-    package.path = root .. "/?.lua;" .. package.path
+-- Apply generated colors without registering the palette as a config dependency.
+-- Noctalia calls this function after rendering a palette, avoiding a full reload.
+function apply_noctalia_theme()
+    local path = root .. "/noctalia.lua"
+    local file = io.open(path, "r")
+    if not file then return end
+    local source = file:read("*a")
+    file:close()
+    local palette = assert(load(source, "@" .. path, "t"))()
+    palette.apply_theme()
 end
+apply_noctalia_theme()

@@ -25,7 +25,6 @@ sync-expected.json
 secrets.*
 /.ssh/
 /.aws/
-/.codex/
 
 # Runtime state; keep the clean Noctalia override seed
 /.local/state/*
@@ -50,9 +49,6 @@ secrets.*
 /.config/nvim/lua/noctalia_palette.lua
 /.config/nvim/.lazy/
 /.config/nvim/lazyvim.json.bak
-
-# Dolphin browsing state is machine-local.
-/.local/share/dolphin/
 
 # Keep the video folder; large local wallpaper clips stay machine-local.
 /.local/share/wallpapers/videos/*

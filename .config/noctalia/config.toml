@@ -172,7 +172,7 @@ time_format = "{:%-I:%M %p}"
 
     [shell.launcher]
     app_grid = false
-    pinned = [ "kitty", "zen-browser", "org.kde.dolphin" ]
+    pinned = [ "kitty", "zen-browser", "nemo" ]
     sort_by_usage = true
 
     [shell.panel]
@@ -208,7 +208,7 @@ wallpaper_scheme = "dysfunctional"
         hook_async = false
         input_path = "templates/hyprland/colors.lua"
         output_path = "$XDG_CONFIG_HOME/hypr/noctalia.lua"
-        post_hook = "hyprctl reload"
+        post_hook = "hyprctl eval 'apply_noctalia_theme()'"
 
         [theme.templates.user.neovim]
         input_path = "templates/neovim/palette.lua"

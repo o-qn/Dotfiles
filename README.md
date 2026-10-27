@@ -1,6 +1,6 @@
 # Desktop dotfiles
 
-CachyOS · Hyprland 0.56 · Noctalia 5 · Kitty · Dolphin · Gwenview · Easy Effects · Zen · LazyVim.
+CachyOS · Hyprland 0.56 · Noctalia 5 · Kitty · Nemo · Gwenview · Easy Effects · Zen · LazyVim.
 Requires Python 3.11+, Node.js, xrandr and the desktop apps installed.
 
 ```bash

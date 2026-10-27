@@ -15,7 +15,6 @@ CONFIG_DIRS = ('hypr', 'kitty', 'noctalia', 'btop', 'qt6ct', 'nvim')
 
 def targets(home):
     return [home / '.config' / name for name in CONFIG_DIRS] + [
-        home / '.config/dolphinrc',
         home / '.config/gwenviewrc',
         home / '.config/easyeffectsrc',
         home / '.local/share/noctalia/plugins/displays',
@@ -40,7 +39,7 @@ def deploy(home):
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.is_symlink():
             target.unlink()
-        if source.name in {'gwenviewrc', 'dolphinrc', 'easyeffectsrc'} or source.suffix in {'.toml', '.conf', '.lua', '.py', '.sh'}:
+        if source.name in {'gwenviewrc', 'easyeffectsrc'} or source.suffix in {'.toml', '.conf', '.lua', '.py', '.sh'}:
             target.write_text(expand(source.read_text(), home))
             shutil.copymode(source, target)
         else:

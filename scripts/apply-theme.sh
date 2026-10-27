@@ -3,8 +3,7 @@ set -euo pipefail
 # Run explicitly inside your Hyprland session after installing the dotfiles.
 noctalia msg config-reload
 noctalia msg templates-apply
-xdg-mime default org.kde.dolphin.desktop inode/directory
-kwriteconfig6 --file dolphinrc --group UiSettings --key ColorScheme noctalia
+xdg-mime default nemo.desktop inode/directory
 if command -v easyeffects >/dev/null; then
     kwriteconfig6 --file easyeffectsrc --group UiSettings --key ColorScheme noctalia
 fi
@@ -21,5 +20,6 @@ if command -v gwenview >/dev/null; then
 fi
 if command -v gsettings >/dev/null; then
     gsettings set org.gnome.desktop.interface icon-theme Papirus-Dark
+    gsettings set org.cinnamon.desktop.default-applications.terminal exec kitty 2>/dev/null || true
 fi
 printf 'Noctalia templates applied. Restart Zen; reopen Qt apps if colors do not refresh.\n'
