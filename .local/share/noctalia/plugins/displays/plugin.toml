@@ -1,8 +1,8 @@
-id = "qn/displays"
+id = "desktop/displays"
 name = "Displays"
 version = "1.0.0"
 plugin_api = 9
-author = "qn"
+author = "@USER@"
 license = "MIT"
 icon = "device-desktop"
 description = "Enable and disable desktop displays with workspace restoration."

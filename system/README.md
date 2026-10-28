@@ -2,7 +2,7 @@
 
 Requires an existing greetd + Noctalia Greeter setup. These templates are not installed automatically.
 
-Replace `@USER@` in `noctalia-greeter/greeter.toml`. Back up the existing `/etc/greetd/config.toml` and `/var/lib/noctalia-greeter/` before deploying; greeter state must be readable by its account. `sync.toml` is an initial fallback, replaced by desktop appearance sync.
+Replace `@USER@` in `noctalia-greeter/greeter.toml` and verify the `user` account in `greetd/config.toml` matches your distro (`greeter`, `_greetd`, or `greetd`). Back up the existing `/etc/greetd/config.toml` and `/var/lib/noctalia-greeter/` before deploying; greeter state must be readable by its account. `sync.toml` is an initial fallback, replaced by desktop appearance sync.
 
 ```bash
 sudo timedatectl set-timezone Asia/Amman

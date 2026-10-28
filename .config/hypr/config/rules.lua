@@ -18,7 +18,7 @@ hl.window_rule({ name = "desktop-tools", match = { class = "^(org.pulseaudio.pav
 hl.window_rule({ name = "desktop-reference", match = { class = "^(desktop-doctor)$" }, float = true, center = true, size = "1000 740" })
 hl.window_rule({ name = "scratchpad-style", match = { workspace = "special:magic" }, rounding = 16 })
 hl.window_rule({
-    name = "zen-no-glass", match = { class = "^(zen|Zen|zen-browser|zen-bin)$" },
+    name = "zen-no-glass", match = { class = "^(zen|Zen|zen-browser|zen-bin|app[.]zen_browser[.]zen)$" },
     opaque = true, no_blur = true, force_rgbx = true,
 })
 hl.window_rule({

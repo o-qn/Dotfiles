@@ -15,7 +15,7 @@ local scripts = '"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/desktop.sh" '
 cmd("SUPER + Q", "kitty", "Open terminal")
 bind("SUPER + C", hl.dsp.window.close(), "Close focused window")
 cmd("SUPER + E", "bash " .. scripts .. "files", "Open Nemo")
-cmd("SUPER + B", "zen-browser", "Open Zen Browser")
+cmd("SUPER + B", "bash " .. scripts .. "browser", "Open Zen Browser")
 shell("SUPER + R", "panel-toggle launcher", "Application launcher")
 shell("SUPER + V", "panel-toggle clipboard", "Clipboard history")
 bind("SUPER + SHIFT + SPACE", hl.dsp.window.float({ action = "toggle" }), "Toggle floating")

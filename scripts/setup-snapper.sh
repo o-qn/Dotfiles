@@ -7,10 +7,6 @@ if (( EUID == 0 )); then
 fi
 command -v snapper >/dev/null
 config_file=/etc/snapper/configs/root
-if [[ ! -f "$config_file" ]] || ! rg -q '^SUBVOLUME="/"$' "$config_file" || ! rg -q '^FSTYPE="btrfs"$' "$config_file"; then
-    printf 'Expected an existing Btrfs Snapper root configuration; nothing changed.\n' >&2
-    exit 1
-fi
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 policy="$script_dir/../system/snapper/root-timeline.conf"
 settings=()
@@ -27,6 +23,10 @@ if (( ${#settings[@]} == 0 )); then
     exit 1
 fi
 sudo -v
+if ! sudo test -f "$config_file" || ! sudo grep -Eq '^SUBVOLUME="/"$' "$config_file" || ! sudo grep -Eq '^FSTYPE="btrfs"$' "$config_file"; then
+    printf 'Expected an existing Btrfs Snapper root configuration; nothing changed.\n' >&2
+    exit 1
+fi
 saved="/var/lib/snapper/config-backups/root-$(date +%Y%m%d-%H%M%S).conf"
 sudo install -Dm600 "$config_file" "$saved"
 printf 'Original configuration saved: %s\n' "$saved"

@@ -11,7 +11,30 @@ if [[ ! -f "$plugin_config" ]]; then
   exit 1
 fi
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-sudo pacman -S --needed evtest socat
+missing=()
+for cmd in evtest socat; do
+  command -v "$cmd" >/dev/null || missing+=("$cmd")
+done
+if (( ${#missing[@]} > 0 )); then
+  if command -v pacman >/dev/null; then
+    sudo pacman -S --needed "${missing[@]}"
+  elif command -v dnf >/dev/null; then
+    sudo dnf install -y "${missing[@]}"
+  elif command -v apt-get >/dev/null; then
+    sudo apt-get install -y "${missing[@]}"
+  elif command -v zypper >/dev/null; then
+    sudo zypper install -y "${missing[@]}"
+  elif command -v xbps-install >/dev/null; then
+    sudo xbps-install -S "${missing[@]}"
+  elif command -v apk >/dev/null; then
+    sudo apk add "${missing[@]}"
+  elif command -v emerge >/dev/null; then
+    sudo emerge --noreplace "${missing[@]}"
+  else
+    printf 'Install missing dependencies with your distro package manager: %s\n' "${missing[*]}" >&2
+    exit 1
+  fi
+fi
 sudo install -Dm644 "$script_dir/../system/udev/70-noctalia-bongocat.rules" /etc/udev/rules.d/70-noctalia-bongocat.rules
 sudo udevadm control --reload-rules
 sudo udevadm trigger --subsystem-match=input --action=add

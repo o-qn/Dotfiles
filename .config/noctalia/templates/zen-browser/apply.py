@@ -36,7 +36,13 @@ def main():
     with (cache/'apply.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         profiles = set()
-        for root in [config/'zen', home/'.zen']:
+        roots = [
+            config/'zen',
+            home/'.zen',
+            home/'.var/app/app.zen_browser.zen/.zen',
+            home/'.var/app/app.zen_browser.zen/config/zen',
+        ]
+        for root in roots:
             ini = configparser.ConfigParser(interpolation=None)
             ini.read(root/'profiles.ini')
             for section in ini.sections():
