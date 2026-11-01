@@ -1,9 +1,10 @@
 # Login screen fallback; desktop appearance sync supplies the theme.
 [session]
-default = "Hyprland"
+# Leave default unset so noctalia-greeter uses [session].last from /var/lib/noctalia-greeter/sync.toml
+# default = "Hyprland"
 
 [user]
-default = "@USER@"
+default = "qn"
 
 [appearance]
 password_style = "default"

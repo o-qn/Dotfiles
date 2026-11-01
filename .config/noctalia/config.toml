@@ -4,7 +4,7 @@ order = [ "default" ]
 
     [bar.default]
     background_opacity = 0.68000000000000005
-    border = "outline_variant"
+    border = "outline"
     border_width = 1
     center = [ "clock", "cat" ]
     concave_edge_corners = false
@@ -131,7 +131,7 @@ time_format = "{:%-I:%M %p}"
     [shell.screenshot]
     annotate = true
     copy_to_clipboard = true
-    directory = "@HOME@/Pictures/Screenshots"
+    directory = "/home/qn/Pictures/Screenshots"
     freeze_screen = true
     save_to_file = true
     show_cursor = false
@@ -154,7 +154,19 @@ wallpaper_scheme = "dysfunctional"
         hook_async = false
         input_path = "templates/hyprland/colors.lua"
         output_path = "$XDG_CONFIG_HOME/hypr/noctalia.lua"
-        post_hook = "hyprctl eval 'apply_noctalia_theme()'"
+        post_hook = "hyprctl eval 'apply_noctalia_theme()' || true"
+
+        [theme.templates.user.niri-accent]
+        hook_async = true
+        input_path = "templates/niri/colors.kdl"
+        output_path = "$XDG_CONFIG_HOME/niri/noctalia-colors.kdl"
+        post_hook = "niri msg action load-config-file || true"
+
+        [theme.templates.user.mango-accent]
+        hook_async = true
+        input_path = "templates/mango/colors.conf"
+        output_path = "$XDG_CONFIG_HOME/mango/noctalia-colors.conf"
+        post_hook = "mmsg dispatch reload_config || true"
 
         [theme.templates.user.neovim]
         input_path = "templates/neovim/palette.lua"
@@ -173,21 +185,21 @@ wallpaper_scheme = "dysfunctional"
         post_hook = "python3 '{{ config_dir }}/templates/zen-browser/apply.py'"
 
 [wallpaper]
-directory = "@DATA_HOME@/wallpapers"
+directory = "/home/qn/.local/share/wallpapers"
 enabled = true
 fill_mode = "crop"
 transition = [ "fade" ]
 transition_duration = 400
 
     [wallpaper.default]
-    path = "@DATA_HOME@/wallpapers/wallhaven-jelq8p.jpg"
+    path = "/home/qn/.local/share/wallpapers/wallhaven-jelq8p.jpg"
 
     [wallpaper.last]
-    path = "@DATA_HOME@/wallpapers/wallhaven-jelq8p.jpg"
+    path = "/home/qn/.local/share/wallpapers/wallhaven-jelq8p.jpg"
 
     [[wallpaper.favorite]]
     palette_source = "wallpaper"
-    path = "@DATA_HOME@/wallpapers/abstract-swirls.jpg"
+    path = "/home/qn/.local/share/wallpapers/abstract-swirls.jpg"
     theme_mode = "dark"
     wallpaper_scheme = "m3-content"
 
@@ -227,7 +239,7 @@ type = "custom_button"
 
 [widget.workspaces]
 active_pill_size = 1.3
-empty_color = "surface_container"
+empty_color = "surface_variant"
 focused_color = "primary"
 hide_when_empty = false
 label_source = "id"

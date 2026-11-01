@@ -1,6 +1,6 @@
 # Plugin settings shared by the panel, picker and background service.
 [plugin_settings."noctalia/mpvpaper"]
-video_directory = "@DATA_HOME@/wallpapers/videos"
+video_directory = "/home/qn/.local/share/wallpapers/videos"
 mute = true
 hardware_decode = true
 auto_pause = "full"
@@ -8,7 +8,7 @@ run_as_systemd = false
 extract_last_frame = true
 
 [plugin_settings."noctalia/wallhaven"]
-download_dir = "@DATA_HOME@/wallpapers"
+download_dir = "/home/qn/.local/share/wallpapers"
 
 [widget.cat]
 type = "noctalia/bongocat:cat"

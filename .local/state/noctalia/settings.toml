@@ -1,3 +1,178 @@
-# Preferences are stored in .config/noctalia/config.toml.
-# Subsequent GUI edits are local runtime overrides.
 config_version = 15
+
+[bar.default]
+start = [ "launcher", "workspaces", "workspace-add-main", "active_window" ]
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+widget_order = [
+    "lockscreen-login-box@WAYLAND-1",
+    "lockscreen-login-box@WL-1",
+    "lockscreen-login-box@DP-3",
+    "lockscreen-login-box@DP-2"
+]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@DP-2"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 1024.0
+    cy = 970.0
+    output = "DP-2"
+    placement_height = 1152.0
+    placement_width = 2048.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@DP-2".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@DP-3"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 540.0
+    cy = 1738.0
+    output = "DP-3"
+    placement_height = 1920.0
+    placement_width = 1080.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@DP-3".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@WAYLAND-1"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 503.0
+    cy = 899.0
+    output = "WAYLAND-1"
+    placement_height = 1081.0
+    placement_width = 1006.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@WAYLAND-1".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@WL-1"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 502.99996948242188
+    cy = 900.0
+    output = "WL-1"
+    placement_height = 1082.0
+    placement_width = 1006.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@WL-1".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+[theme]
+builtin = "Dracula"
+mode = "dark"
+source = "wallpaper"
+wallpaper_scheme = "dysfunctional"
+
+    [theme.templates]
+    builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "mango", "niri", "qt" ]
+    community_ids = [ "opencode", "papirus-icons", "fzf" ]
+    enable_community_templates = true
+
+[wallpaper.default]
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+
+[wallpaper.last]
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+
+[wallpaper.monitors.DP-2]
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+
+[wallpaper.monitors.DP-3]
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+
+[[wallpaper.favorite]]
+palette_source = "wallpaper"
+path = "/home/qn/.local/share/wallpapers/abstract-swirls.jpg"
+theme_mode = "dark"
+wallpaper_scheme = "vibrant"
+
+[[wallpaper.favorite]]
+palette_source = "wallpaper"
+path = "/home/qn/.local/share/wallpapers/tree.jpg"
+theme_mode = "dark"
+wallpaper_scheme = "m3-content"
+
+[[wallpaper.favorite]]
+palette_source = "wallpaper"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+theme_mode = "dark"
+wallpaper_scheme = "faithful"
+
+[[wallpaper.favorite]]
+palette_source = "wallpaper"
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+theme_mode = "dark"
+wallpaper_scheme = "dysfunctional"
