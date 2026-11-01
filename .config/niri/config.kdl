@@ -1,0 +1,390 @@
+// =============================================================================
+// Niri Configuration - Hooked with Noctalia Desktop
+// =============================================================================
+
+hotkey-overlay {
+    skip-at-startup
+}
+animations {
+    workspace-switch {
+ curve "cubic-bezier" 0.25 0.1 0.25 1.0 ;
+
+
+
+
+
+
+
+
+
+
+        duration-ms 150
+    }
+}
+// -----------------------------------------------------------------------------
+// Input Configuration
+// -----------------------------------------------------------------------------
+input {
+    focus-follows-mouse max-scroll-amount="33%"
+    workspace-auto-back-and-forth
+
+    keyboard {
+        xkb {
+            layout "us,ara"
+        }
+        repeat-delay 250
+        repeat-rate 35
+        numlock
+    }
+
+    touchpad {
+        tap
+        // natural-scroll off to match Hyprland input.lua
+    }
+
+    mouse {
+    }
+    trackpoint
+}
+
+// -----------------------------------------------------------------------------
+// Gestures & Hot Corners
+// -----------------------------------------------------------------------------
+gestures {
+    hot-corners {
+        off
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Displays / Outputs
+// -----------------------------------------------------------------------------
+
+// Main Monitor: HKC G2721P (2560x1440 @ 200Hz, VRR enabled, scaled 1.25)
+output "DP-2" {
+    mode "2560x1440@199.999"
+    scale 1.25
+    position x=1080 y=388
+
+    focus-at-startup
+}
+
+// Portrait Monitor: Sceptre L24 (1920x1080 @ 144Hz, rotated 90°, left of main)
+output "DP-3" {
+    mode "1920x1080@144.001"
+    scale 1.0
+    transform "90"
+    position x=0 y=0
+}
+
+// -----------------------------------------------------------------------------
+// Layout & Styling
+// -----------------------------------------------------------------------------
+layout {
+    gaps 12
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+        proportion 1.0
+    }
+
+    default-column-width { proportion 0.5; }
+
+    // Colors are dynamically applied by noctalia.kdl at the bottom of the file
+    focus-ring {
+        width 2
+    }
+
+    border {
+        off
+        width 2
+    }
+
+    shadow {
+        on
+        softness 20
+        spread 3
+        offset x=0 y=4
+        color "#16161e99"
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Autostart Services
+// -----------------------------------------------------------------------------
+
+// Noctalia owns the desktop bar, notifications, wallpaper, clipboard, polkit agent, OSD, and idle
+spawn-at-startup "noctalia" "--daemon"
+
+// Named workspace acting as Niri's scratchpad (Mod+S / Mod+Shift+S)
+workspace "scratchpad"
+
+// -----------------------------------------------------------------------------
+// Cursor, Screenshots & Environment Variables
+// -----------------------------------------------------------------------------
+cursor {
+    xcursor-theme "breeze_cursors"
+    xcursor-size 24
+}
+
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+environment {
+    QT_QPA_PLATFORM "wayland;xcb"
+    QT_QPA_PLATFORMTHEME "qt6ct"
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
+}
+
+// Prefer client-side decorations to be omitted
+prefer-no-csd
+
+// -----------------------------------------------------------------------------
+// Window Rules
+// -----------------------------------------------------------------------------
+
+// Rounded corners for windows matching Noctalia's aesthetic
+window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+
+// Nemo glass & opacity (matching Hyprland's nemo-glass: 0.90 active, 0.84 inactive, blurred)
+window-rule {
+    match app-id=r"^([Nn]emo)$"
+    opacity 0.9
+    draw-border-with-background false
+    background-effect {
+        blur true
+        xray false
+    }
+    popups {
+        opacity 0.92
+        background-effect {
+            blur true
+        }
+    }
+}
+
+window-rule {
+    match app-id=r"^([Nn]emo)$" is-active=false
+    opacity 0.84
+}
+
+// Kitty & desktop-doctor glass blur (matching Hyprland's kitty-glass)
+window-rule {
+    match app-id=r"^(kitty|desktop-doctor)$"
+    draw-border-with-background false
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// Dialogs and system tools should open floating (matching Hyprland's 900x650 size)
+window-rule {
+    match app-id=r"^(org\.pulseaudio\.pavucontrol|blueman-manager|nm-connection-editor|qt6ct|kvantummanager)$"
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 650; }
+}
+
+window-rule {
+    match app-id=r"^desktop-doctor$"
+    open-floating true
+    default-column-width { fixed 1000; }
+    default-window-height { fixed 740; }
+}
+
+// Browser Picture-in-Picture
+window-rule {
+    match app-id=r"(zen|firefox)" title="^Picture-in-Picture$"
+    open-floating true
+}
+
+// Steam games open on the main gaming output with VRR
+window-rule {
+    match app-id=r"^steam_app_\d+$"
+    open-on-output "DP-2"
+    variable-refresh-rate true
+}
+
+// -----------------------------------------------------------------------------
+// Keybindings
+// -----------------------------------------------------------------------------
+binds {
+    
+
+    // Perspective adjustment for Hyprland's Mod+S / Mod+Shift+S (scratchpad)
+    
+    
+    
+
+    // Navigation (Focus - crosses monitors at edges like Hyprland)
+    
+    // Noctalia Desktop Shell Hooks
+    Mod+R       { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+D repeat=false { toggle-overview; }
+    Mod+V       { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    Mod+M       { spawn "noctalia" "msg" "panel-toggle" "session"; }
+    Mod+T       { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+    Mod+N       { spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications"; }
+    Mod+Ctrl+N  { spawn "noctalia" "msg" "notification-dnd-toggle"; }
+    Mod+W       { spawn "noctalia" "msg" "panel-toggle" "wallpaper"; }
+    Mod+Ctrl+S  { spawn "noctalia" "msg" "settings-toggle"; }
+    Mod+Ctrl+B  { spawn "noctalia" "msg" "bar-toggle"; }
+    Mod+Ctrl+I  { spawn "noctalia" "msg" "caffeine-toggle"; }
+    Mod+L       { spawn "noctalia" "msg" "session" "lock"; }
+    Alt+Tab     { spawn "noctalia" "msg" "window-switcher"; }
+
+    // Screenshots via Noctalia
+    Ctrl+Alt+S  { spawn "noctalia" "msg" "screenshot-region"; }
+    Print       { spawn "noctalia" "msg" "screenshot-region"; }
+    Ctrl+Alt+F  { spawn "noctalia" "msg" "screenshot-fullscreen"; }
+    Ctrl+Alt+A  { spawn "noctalia" "msg" "screenshot-annotate"; }
+
+    // Media & Hardware keys via Noctalia
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-up" "5"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-down" "5"; }
+    XF86AudioMute allow-when-locked=true { spawn "noctalia" "msg" "volume-mute"; }
+    XF86AudioMicMute allow-when-locked=true { spawn "noctalia" "msg" "mic-mute"; }
+    XF86AudioNext allow-when-locked=true { spawn "noctalia" "msg" "media" "next"; }
+    XF86AudioPrev allow-when-locked=true { spawn "noctalia" "msg" "media" "previous"; }
+    XF86AudioPlay allow-when-locked=true { spawn "noctalia" "msg" "media" "toggle"; }
+    XF86AudioPause allow-when-locked=true { spawn "noctalia" "msg" "media" "toggle"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "noctalia" "msg" "brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia" "msg" "brightness-down"; }
+
+    // Applications (matching Hyprland keybinds.lua)
+    Mod+Q        { spawn "kitty"; }
+    Mod+Return   { spawn "kitty"; }
+    Mod+E        { spawn "nemo"; }
+    Mod+B        { spawn "zen"; }
+    Mod+Escape   { spawn "kitty" "-e" "btop"; }
+    Mod+Ctrl+Q   { spawn-sh "kitty --class desktop-doctor -e bash \"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/desktop.sh\" doctor"; }
+
+    // Layout Switching (English / Arabic)
+    Mod+Space    { switch-layout "next"; }
+
+    // Windows & Columns (Hyprland shortcuts with Niri perspective adjustments)
+    Mod+C repeat=false { close-window; }
+    Mod+Shift+Space        { toggle-window-floating; }
+    Mod+Ctrl+Space         { switch-focus-between-floating-and-tiling; }
+    Mod+F                  { fullscreen-window; }
+    Mod+Shift+F            { maximize-column; }
+
+    // Perspective adjustment for Hyprland's Mod+P (pseudo-tiling) -> cycle preset column widths / center / reset height
+    Mod+P                  { switch-preset-column-width; }
+    Mod+Shift+P            { center-column; }
+    Mod+Ctrl+P             { reset-window-height; }
+
+    // Perspective adjustment for Hyprland's Mod+J (togglesplit) -> stack/unstack into column or tabbed column
+    Mod+J                  { consume-or-expel-window-left; }
+    Mod+Shift+J            { toggle-column-tabbed-display; }
+    Mod+Shift+S            { move-window-to-workspace "scratchpad" focus=false; }
+
+    Mod+BracketLeft        { consume-or-expel-window-left; }
+    Mod+BracketRight       { consume-or-expel-window-right; }
+    Mod+Comma              { consume-window-into-column; }
+    Mod+Period             { expel-window-from-column; }
+    Mod+Minus              { set-column-width "-10%"; }
+    Mod+Equal              { set-column-width "+10%"; }
+    Mod+Shift+Minus        { set-window-height "-10%"; }
+    Mod+Shift+Equal        { set-window-height "+10%"; }
+    Mod+Up                 { focus-window-or-workspace-up; }
+    Mod+Down               { focus-window-or-workspace-down; }
+    Mod+Home               { focus-column-first; }
+    Mod+End                { focus-column-last; }
+
+    // Moving Columns & Windows (Mod+Shift+Arrows matches Hyprland; Mod+Ctrl+Arrows kept too)
+    Mod+Shift+Left         { move-column-left-or-to-monitor-left; }
+    Mod+Shift+Right        { move-column-right-or-to-monitor-right; }
+    Mod+Shift+Up           { move-window-up-or-to-workspace-up; }
+    Mod+Shift+Down         { move-window-down-or-to-workspace-down; }
+    Mod+Ctrl+Left          { move-column-left; }
+    Mod+Ctrl+Right         { move-column-right; }
+    Mod+Ctrl+Up            { move-window-up; }
+    Mod+Ctrl+Down          { move-window-down; }
+    Mod+Ctrl+Home          { move-column-to-first; }
+    Mod+Ctrl+End           { move-column-to-last; }
+
+    // Explicit Monitor Focus & Movement
+    Mod+Alt+Left           { focus-monitor-left; }
+    Mod+Alt+Right          { focus-monitor-right; }
+    Mod+Alt+Up             { focus-monitor-up; }
+    Mod+Alt+Down           { focus-monitor-down; }
+    Mod+Shift+Ctrl+Left    { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+Right   { move-column-to-monitor-right; }
+    Mod+Shift+Ctrl+Up      { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+Down    { move-column-to-monitor-down; }
+
+    // Workspaces Focus & Movement (1..10, Mod+Shift moves & follows like Hyprland)
+    Mod+1                  { focus-workspace 1; }
+    Mod+2                  { focus-workspace 2; }
+    Mod+3                  { focus-workspace 3; }
+    Mod+4                  { focus-workspace 4; }
+    Mod+5                  { focus-workspace 5; }
+    Mod+6                  { focus-workspace 6; }
+    Mod+7                  { focus-workspace 7; }
+    Mod+8                  { focus-workspace 8; }
+    Mod+9                  { focus-workspace 9; }
+    Mod+0                  { focus-workspace 10; }
+    Mod+Shift+1            { move-column-to-workspace 1; }
+    Mod+Shift+2            { move-column-to-workspace 2; }
+    Mod+Shift+3            { move-column-to-workspace 3; }
+    Mod+Shift+4            { move-column-to-workspace 4; }
+    Mod+Shift+5            { move-column-to-workspace 5; }
+    Mod+Shift+6            { move-column-to-workspace 6; }
+    Mod+Shift+7            { move-column-to-workspace 7; }
+    Mod+Shift+8            { move-column-to-workspace 8; }
+    Mod+Shift+9            { move-column-to-workspace 9; }
+    Mod+Shift+0            { move-column-to-workspace 10; }
+    Mod+Ctrl+1             { move-column-to-workspace 1 focus=false; }
+    Mod+Ctrl+2             { move-column-to-workspace 2 focus=false; }
+    Mod+Ctrl+3             { move-column-to-workspace 3 focus=false; }
+    Mod+Ctrl+4             { move-column-to-workspace 4 focus=false; }
+    Mod+Ctrl+5             { move-column-to-workspace 5 focus=false; }
+    Mod+Ctrl+6             { move-column-to-workspace 6 focus=false; }
+    Mod+Ctrl+7             { move-column-to-workspace 7 focus=false; }
+    Mod+Ctrl+8             { move-column-to-workspace 8 focus=false; }
+    Mod+Ctrl+9             { move-column-to-workspace 9 focus=false; }
+    Mod+Ctrl+0             { move-column-to-workspace 10 focus=false; }
+
+    Mod+Page_Down          { focus-workspace-down; }
+    Mod+Page_Up            { focus-workspace-up; }
+    Mod+Ctrl+Page_Down     { move-column-to-workspace-down; }
+    Mod+Ctrl+Page_Up       { move-column-to-workspace-up; }
+
+    // Mouse Wheel Workspace & Column Scrolling (matches Hyprland SUPER + mouse_down/mouse_up)
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+WheelScrollUp cooldown-ms=150 { move-column-to-workspace-up; }
+    Mod+Shift+WheelScrollDown            { focus-column-right; }
+    Mod+Shift+WheelScrollUp              { focus-column-left; }
+    Mod+Ctrl+Shift+WheelScrollDown       { move-column-right; }
+    Mod+Ctrl+Shift+WheelScrollUp         { move-column-left; }
+    Mod+WheelScrollRight                 { focus-column-right; }
+    Mod+WheelScrollLeft                  { focus-column-left; }
+    Mod+Ctrl+WheelScrollRight            { move-column-right; }
+    Mod+Ctrl+WheelScrollLeft             { move-column-left; }
+
+    // Help, Reload, Monitor Toggle & Session
+    Mod+F1                 { spawn-sh "\"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/desktop.sh\" help"; }
+    Mod+Shift+Slash        { show-hotkey-overlay; }
+    Mod+Shift+R            { spawn-sh "niri msg action load-config-file && noctalia msg config-reload && noctalia msg notification-show 'Desktop' 'Niri configuration reloaded.'"; }
+    Mod+Ctrl+M             { spawn-sh "if niri msg -j outputs | grep -A20 '\"DP-3\"' | grep -q '\"current_mode\": null'; then niri msg output DP-3 on; else niri msg output DP-3 off; fi"; }
+    Mod+Shift+E            { quit; }
+    Mod+Shift+d { spawn "/home/qn/.local/bin/niri-toggle-vrr"; }
+    Mod+Grave          { focus-monitor-next; }
+    Mod+Shift+Grave    { move-column-to-monitor-next; }
+    Mod+Ctrl+Grave     { move-window-to-monitor-next; }
+    Mod+a { focus-column-left; }
+    Mod+s { focus-column-right; }
+    Mod+left { focus-column-left; }
+    Mod+right { focus-column-right; }
+}
+
+include "noctalia.kdl"
