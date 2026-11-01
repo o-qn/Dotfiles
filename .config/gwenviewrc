@@ -2,4 +2,4 @@
 ColorScheme=noctalia
 
 [FullScreen]
-FullScreenColorScheme=@DATA_HOME@/color-schemes/noctalia.colors
+FullScreenColorScheme=/home/qn/.local/share/color-schemes/noctalia.colors
