@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
+
+is_niri() {
+  [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] && niri msg version >/dev/null 2>&1
+}
+
 case "${1:-help}" in
   files)
     exec nemo "${2:-$HOME}"
@@ -20,7 +25,21 @@ case "${1:-help}" in
     exec python3 "$config_root/scripts/shortcuts.py"
     ;;
   reload)
-    if report=$(Hyprland --verify-config -c "$config_root/hyprland.lua" 2>&1); then
+    if is_niri; then
+      if report=$(niri validate 2>&1); then
+        if report=$(noctalia config validate 2>&1) && ! [[ "$report" == *"WARN "* ]]; then
+          niri msg action load-config-file
+          noctalia msg config-reload
+          noctalia msg notification-show "Desktop" "Desktop configuration reloaded."
+        else
+          noctalia msg notification-show "Noctalia configuration needs attention" "$report"
+          exit 1
+        fi
+      else
+        noctalia msg notification-show "Niri configuration needs attention" "$report"
+        exit 1
+      fi
+    elif report=$(Hyprland --verify-config -c "$config_root/hyprland.lua" 2>&1); then
       if report=$(noctalia config validate 2>&1) && ! [[ "$report" == *"WARN "* ]]; then
         hyprctl reload
         noctalia msg config-reload
@@ -36,22 +55,37 @@ case "${1:-help}" in
     ;;
   doctor)
     printf '\033[38;2;122;162;247mDESKTOP CHECK\033[0m\n\n'
-    for app in Hyprland hyprctl noctalia kitty nemo qt6ct; do
-      if command -v "$app" >/dev/null; then printf '  OK       %s\n' "$app"; else printf '  MISSING  %s\n' "$app"; fi
-    done
+    if is_niri; then
+      for app in niri noctalia kitty nemo qt6ct; do
+        if command -v "$app" >/dev/null; then printf '  OK       %s\n' "$app"; else printf '  MISSING  %s\n' "$app"; fi
+      done
+    else
+      for app in Hyprland hyprctl noctalia kitty nemo qt6ct; do
+        if command -v "$app" >/dev/null; then printf '  OK       %s\n' "$app"; else printf '  MISSING  %s\n' "$app"; fi
+      done
+    fi
     if command -v zen-browser >/dev/null || command -v zen >/dev/null || command -v zen-bin >/dev/null || { command -v flatpak >/dev/null && flatpak info app.zen_browser.zen >/dev/null 2>&1; }; then
       printf '  OK       zen-browser\n'
     else
       printf '  MISSING  zen-browser\n'
     fi
-    printf '\nHyprland configuration:\n'
-    hyprctl configerrors || true
+    if is_niri; then
+      printf '\nNiri configuration:\n'
+      niri validate || true
+    else
+      printf '\nHyprland configuration:\n'
+      hyprctl configerrors || true
+    fi
     printf '\nNoctalia configuration:\n'
     noctalia config validate || true
     printf '\nShell status:\n'
     noctalia msg status || true
     printf '\nMonitors:\n'
-    hyprctl monitors || true
+    if is_niri; then
+      niri msg outputs || true
+    else
+      hyprctl monitors || true
+    fi
     printf '\nPress Enter to close.'
     read -r _
     ;;

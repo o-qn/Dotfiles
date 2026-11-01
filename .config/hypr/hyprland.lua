@@ -18,3 +18,7 @@ function apply_noctalia_theme()
     palette.apply_theme()
 end
 apply_noctalia_theme()
+
+
+-- For Noctalia Color templates
+require("noctalia").apply_theme()

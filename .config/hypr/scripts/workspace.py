@@ -10,7 +10,34 @@ import subprocess
 def query(command):
     return json.loads(subprocess.check_output(["hyprctl", command, "-j"], text=True))
 
+def is_niri():
+    sock = os.environ.get("NIRI_SOCKET")
+    if not sock or not Path(sock).is_socket():
+        return False
+    return subprocess.run(
+        ["niri", "msg", "version"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode == 0
+
+def create_workspace_niri(monitor=None):
+    outputs = json.loads(subprocess.check_output(["niri", "msg", "-j", "outputs"], text=True))
+    target_name = None
+    if monitor:
+        for name, info in outputs.items():
+            desc = f"{info.get('make', '')} {info.get('model', '')}"
+            if name == monitor or monitor in desc:
+                target_name = name
+                break
+    if target_name:
+        subprocess.run(["niri", "msg", "action", "focus-monitor", target_name], check=True)
+    # In Niri, focusing an index larger than the current workspace count on an output
+    # always focuses the bottommost (empty/new) workspace on that output.
+    subprocess.run(["niri", "msg", "action", "focus-workspace", "99"], check=True)
+
 def create_workspace(monitor=None):
+    if is_niri():
+        return create_workspace_niri(monitor)
     runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
     with (runtime / "desktop-workspace.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
