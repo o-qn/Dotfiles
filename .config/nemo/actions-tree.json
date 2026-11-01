@@ -1,0 +1,25 @@
+{
+  "toplevel": [
+    {
+      "uuid": "extract-here.nemo_action",
+      "type": "action",
+      "user-label": null,
+      "user-icon": null,
+      "accelerator": null
+    },
+    {
+      "uuid": "extract-here-subfolder.nemo_action",
+      "type": "action",
+      "user-label": null,
+      "user-icon": null,
+      "accelerator": null
+    },
+    {
+      "uuid": "open-terminal-here.nemo_action",
+      "type": "action",
+      "user-label": null,
+      "user-icon": null,
+      "accelerator": "<Shift>F4"
+    }
+  ]
+}

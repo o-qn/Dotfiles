@@ -1,0 +1,10 @@
+[Nemo Action]
+Active=true
+Name=Open Terminal Here
+Comment=Open Kitty terminal in %P
+Exec=kitty --working-directory %P
+Icon-Name=xsi-utilities-terminal-symbolic
+Selection=any
+Extensions=any;
+Quote=double
+Dependencies=kitty;
