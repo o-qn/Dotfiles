@@ -21,19 +21,19 @@ order = [ "default" ]
     radius_top_right = 12
     reserve_space = true
     shadow = true
-    start = [ "launcher", "workspaces", "workspace-add-main" ]
+    start = [ "launcher", "workspaces", "workspace-add-main", "layout-main" ]
     thickness = 38
     widget_spacing = 8
 
         [bar.default.monitor."Sceptre L24"]
         end = [ "tray", "keyboard_layout", "network", "volume", "notifications", "bluetooth", "control-center" ]
-        start = [ "launcher", "workspaces", "workspace-add-portrait", "active_window" ]
+        start = [ "launcher", "workspaces", "workspace-add-portrait", "layout-portrait", "active_window" ]
 
         [bar.default.monitor.secondary]
         center = [ "clock" ]
         end = [ "keyboard_layout", "volume", "notifications", "control-center" ]
         match = "Sceptre L24"
-        start = [ "launcher", "workspaces", "workspace-add-portrait" ]
+        start = [ "launcher", "workspaces", "workspace-add-portrait", "layout-portrait" ]
 
 [brightness]
 enable_ddcutil = true
@@ -99,7 +99,7 @@ background_opacity = 0.71999999999999997
 position = "bottom_center"
 
 [plugins]
-enabled = [ "noctalia/wallhaven", "noctalia/mpvpaper", "noctalia/bongocat", "noctalia/bitwarden", "desktop/displays" ]
+enabled = [ "noctalia/wallhaven", "noctalia/mpvpaper", "noctalia/bongocat", "noctalia/bitwarden", "desktop/displays", "desktop/umbriel-layout" ]
 
 [shell]
 clipboard_enabled = true
@@ -108,6 +108,7 @@ font_family = "Noto Sans"
 polkit_agent = true
 setup_wizard_enabled = false
 time_format = "{:%-I:%M %p}"
+umbriel_overview_type_to_launch_enabled = true
 
     [shell.animation]
     enabled = true
@@ -145,7 +146,7 @@ source = "wallpaper"
 wallpaper_scheme = "dysfunctional"
 
     [theme.templates]
-    builtin_ids = ["alacritty", "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "qt"]
+    builtin_ids = ["alacritty", "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "qt", "umbriel"]
     community_ids = [ "discord", "steam" ]
     enable_builtin_templates = true
     enable_community_templates = false
@@ -241,7 +242,7 @@ type = "custom_button"
 active_pill_size = 1.3
 empty_color = "surface_variant"
 focused_color = "primary"
-hide_when_empty = false
+hide_when_empty = true
 label_source = "id"
 occupied_color = "secondary"
 show_all_outputs = false
