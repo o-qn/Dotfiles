@@ -6,6 +6,10 @@ is_niri() {
   [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] && niri msg version >/dev/null 2>&1
 }
 
+is_umbriel() {
+  command -v umbriel >/dev/null 2>&1 && umbriel outputs -j >/dev/null 2>&1
+}
+
 case "${1:-help}" in
   files)
     exec nemo "${2:-$HOME}"
@@ -25,7 +29,21 @@ case "${1:-help}" in
     exec python3 "$config_root/scripts/shortcuts.py"
     ;;
   reload)
-    if is_niri; then
+    if is_umbriel; then
+      if report=$(umbriel config validate 2>&1); then
+        if report=$(noctalia config validate 2>&1) && ! [[ "$report" == *"WARN "* ]]; then
+          umbriel msg config-reload
+          noctalia msg config-reload
+          noctalia msg notification-show "Desktop" "Desktop configuration reloaded."
+        else
+          noctalia msg notification-show "Noctalia configuration needs attention" "$report"
+          exit 1
+        fi
+      else
+        noctalia msg notification-show "Umbriel configuration needs attention" "$report"
+        exit 1
+      fi
+    elif is_niri; then
       if report=$(niri validate 2>&1); then
         if report=$(noctalia config validate 2>&1) && ! [[ "$report" == *"WARN "* ]]; then
           niri msg action load-config-file
@@ -55,7 +73,11 @@ case "${1:-help}" in
     ;;
   doctor)
     printf '\033[38;2;122;162;247mDESKTOP CHECK\033[0m\n\n'
-    if is_niri; then
+    if is_umbriel; then
+      for app in umbriel noctalia kitty nemo qt6ct; do
+        if command -v "$app" >/dev/null; then printf '  OK       %s\n' "$app"; else printf '  MISSING  %s\n' "$app"; fi
+      done
+    elif is_niri; then
       for app in niri noctalia kitty nemo qt6ct; do
         if command -v "$app" >/dev/null; then printf '  OK       %s\n' "$app"; else printf '  MISSING  %s\n' "$app"; fi
       done
@@ -69,7 +91,10 @@ case "${1:-help}" in
     else
       printf '  MISSING  zen-browser\n'
     fi
-    if is_niri; then
+    if is_umbriel; then
+      printf '\nUmbriel configuration:\n'
+      umbriel config validate || true
+    elif is_niri; then
       printf '\nNiri configuration:\n'
       niri validate || true
     else
@@ -81,7 +106,9 @@ case "${1:-help}" in
     printf '\nShell status:\n'
     noctalia msg status || true
     printf '\nMonitors:\n'
-    if is_niri; then
+    if is_umbriel; then
+      umbriel outputs || true
+    elif is_niri; then
       niri msg outputs || true
     else
       hyprctl monitors || true
