@@ -35,7 +35,40 @@ def create_workspace_niri(monitor=None):
     # always focuses the bottommost (empty/new) workspace on that output.
     subprocess.run(["niri", "msg", "action", "focus-workspace", "99"], check=True)
 
+def is_umbriel():
+    return subprocess.run(
+        ["umbriel", "outputs", "-j"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode == 0
+
+def create_workspace_umbriel(monitor=None):
+    outputs = json.loads(subprocess.check_output(["umbriel", "outputs", "-j"], text=True))
+    workspaces = json.loads(subprocess.check_output(["umbriel", "workspaces", "-j"], text=True))
+    target_name = None
+    if monitor:
+        for info in outputs:
+            desc = f"{info.get('make', '')} {info.get('model', '')} {info.get('description', '')}"
+            if info.get("name") == monitor or monitor in desc:
+                target_name = info.get("name")
+                break
+    if not target_name:
+        focused = next((o for o in outputs if o.get("focused")), None) or (outputs[0] if outputs else None)
+        if focused:
+            target_name = focused.get("name")
+    used = {w.get("index", 0) for w in workspaces if w.get("occupied") or w.get("active")}
+    number = 1
+    while number in used:
+        number += 1
+    cmd = ["umbriel", "msg", "workspace-switch", str(number)]
+    if target_name:
+        cmd.extend(["--output", target_name])
+    subprocess.run(cmd, check=True)
+    return number
+
 def create_workspace(monitor=None):
+    if is_umbriel():
+        return create_workspace_umbriel(monitor)
     if is_niri():
         return create_workspace_niri(monitor)
     runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
