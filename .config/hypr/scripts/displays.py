@@ -11,10 +11,41 @@ import time
 
 DISPLAYS = (("main", "Main", "G2721P"), ("portrait", "Portrait", "Sceptre L24"))
 
+def is_umbriel():
+    return subprocess.run(
+        ["umbriel", "outputs", "-j"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode == 0
+
 def query(command):
     return json.loads(subprocess.check_output(["hyprctl", "-j", *command], text=True))
 
+def status_umbriel():
+    outputs = json.loads(subprocess.check_output(["umbriel", "outputs", "-j"], text=True))
+    enabled_count = sum(1 for m in outputs if m.get("enabled"))
+    displays = []
+    for role, label, model in DISPLAYS:
+        monitor = next(
+            (m for m in outputs if model in f"{m.get('make', '')} {m.get('model', '')} {m.get('description', '')}"),
+            None,
+        )
+        enabled = bool(monitor and monitor.get("enabled"))
+        workspace = int(monitor.get("active_workspace") or 0) if monitor else 0
+        displays.append({
+            "role": role,
+            "label": label,
+            "connector": monitor.get("name", "") if monitor else "",
+            "connected": monitor is not None,
+            "enabled": enabled,
+            "workspace": workspace if enabled else 0,
+            "can_disable": enabled and enabled_count > 1,
+        })
+    return {"displays": displays}
+
 def status():
+    if is_umbriel():
+        return status_umbriel()
     active = query(["monitors"])
     connected = query(["monitors", "all"])
     names = {monitor["name"] for monitor in active}
@@ -30,6 +61,10 @@ def status():
     return {"displays": displays}
 
 def set_primary():
+    if is_umbriel():
+        current = status_umbriel()
+        main = next((d for d in current["displays"] if d["role"] == "main" and d["enabled"]), None)
+        return {"primary": main["connector"] if main else "DP-2"}
     active = query(["monitors"])
     if not active:
         return {"primary": None}
@@ -59,10 +94,14 @@ def set_enabled(role, enabled):
             return current
         if not enabled and not display["can_disable"]:
             raise RuntimeError("Keep the remaining monitor enabled")
-        code = f"toggle_display({json.dumps(role)})"
-        result = subprocess.run(["hyprctl", "eval", code], capture_output=True, text=True, check=True)
-        if result.stdout.strip() != "ok":
-            raise RuntimeError(result.stdout.strip() or result.stderr.strip())
+        if is_umbriel():
+            action = "output-enable" if enabled else "output-disable"
+            subprocess.run(["umbriel", "msg", action, display["connector"]], check=True)
+        else:
+            code = f"toggle_display({json.dumps(role)})"
+            result = subprocess.run(["hyprctl", "eval", code], capture_output=True, text=True, check=True)
+            if result.stdout.strip() != "ok":
+                raise RuntimeError(result.stdout.strip() or result.stderr.strip())
         for _ in range(30):
             time.sleep(0.1)
             current = status()
