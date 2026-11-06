@@ -21,6 +21,125 @@ def is_niri() -> bool:
     ).returncode == 0
 
 
+def is_umbriel() -> bool:
+    return subprocess.run(
+        ["umbriel", "outputs", "-j"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode == 0
+
+
+UMBRIEL_ACTION_DESCRIPTIONS = {
+    "spawn noctalia msg panel-toggle launcher": "Application launcher",
+    "overview-toggle": "Toggle workspace overview",
+    "cheatsheet-toggle": "Toggle Umbriel keybind cheatsheet",
+    "spawn noctalia msg panel-toggle clipboard": "Clipboard history",
+    "spawn noctalia msg panel-toggle session": "Session menu",
+    "spawn noctalia msg panel-toggle control-center": "Control center",
+    "spawn noctalia msg panel-toggle control-center notifications": "Notification history",
+    "spawn noctalia msg notification-dnd-toggle": "Toggle Do Not Disturb",
+    "spawn noctalia msg panel-toggle wallpaper": "Wallpaper picker",
+    "spawn noctalia msg settings-toggle": "Desktop settings",
+    "spawn noctalia msg bar-toggle": "Show / hide bars",
+    "spawn noctalia msg caffeine-toggle": "Keep awake / restore idle",
+    "spawn noctalia msg session lock": "Lock screen",
+    "spawn noctalia msg window-switcher": "Window switcher",
+    "spawn noctalia msg screenshot-region": "Screenshot region with annotation",
+    "spawn noctalia msg screenshot-fullscreen": "Screenshot focused monitor",
+    "spawn noctalia msg screenshot-annotate": "Freeze screen and annotate",
+    "spawn noctalia msg volume-up 5": "Volume up",
+    "spawn noctalia msg volume-down 5": "Volume down",
+    "spawn noctalia msg volume-mute": "Mute speakers",
+    "spawn noctalia msg mic-mute": "Mute microphone",
+    "spawn noctalia msg media next": "Next track",
+    "spawn noctalia msg media previous": "Previous track",
+    "spawn noctalia msg media toggle": "Play / pause",
+    "spawn noctalia msg brightness-up": "Brightness up",
+    "spawn noctalia msg brightness-down": "Brightness down",
+    "spawn kitty": "Open terminal",
+    "spawn kitty -e btop": "System monitor",
+    "spawn ~/.config/hypr/scripts/desktop.sh files": "Open Nemo",
+    "spawn ~/.config/hypr/scripts/desktop.sh browser": "Open Zen Browser",
+    "spawn ~/.config/hypr/scripts/desktop.sh help": "Search keyboard shortcuts",
+    "spawn ~/.config/hypr/scripts/desktop.sh reload": "Validate and reload configuration",
+    "spawn ~/.local/bin/umbriel-toggle-vrr": "Cycle Variable Refresh Rate (VRR) mode",
+    "config-reload": "Reload Umbriel configuration",
+    "output-toggle DP-3": "Toggle portrait monitor (DP-3)",
+    "session-quit": "Quit Umbriel session",
+    "keyboard-layout-next": "Switch English / Arabic",
+    "window-close": "Close focused window",
+    "window-toggle-floating": "Toggle floating",
+    "window-focus-switch-floating": "Switch focus between floating and tiling",
+    "window-toggle-fullscreen": "Toggle fullscreen",
+    "window-toggle-maximize": "Maximize column",
+    "window-cycle-primary-extent": "Cycle preset column width",
+    "column-center": "Center column",
+    "window-cycle-secondary-extent": "Cycle preset window height",
+    "window-toggle-pinned": "Pin / unpin floating window",
+    "column-toggle-tabbed": "Toggle tabbed column display",
+    "window-consume-or-expel-left": "Stack / unstack window left",
+    "window-consume-or-expel-right": "Stack / unstack window right",
+    "window-consume-from-right": "Consume window from right into column",
+    "window-consume-right": "Expel window to column on the right",
+    "spawn ~/.local/bin/umbriel-layout toggle": "Cycle workspace layout on current monitor (Scroll/Dwindle/Master/Stack)",
+    "spawn ~/.local/bin/umbriel-layout scrolling": "Set monitor layout: Scrolling",
+    "spawn ~/.local/bin/umbriel-layout dwindle": "Set monitor layout: Dwindle",
+    "spawn ~/.local/bin/umbriel-layout master": "Set monitor layout: Master",
+    "spawn ~/.local/bin/umbriel-layout stacking": "Set monitor layout: Stacking",
+    "layout-toggle-split": "Toggle Dwindle split direction",
+    "layout-master-count-decrease": "Decrease Master window count",
+    "layout-master-count-increase": "Increase Master window count",
+    "effect-border-cycle borders": "Cycle border shader effect (Pulse / Audio)",
+    "effect-border-toggle": "Toggle border shader effect on / off",
+    "effect-cursor-toggle": "Toggle cursor shader effect on / off",
+    "column-move-left": "Move column left (same monitor)",
+    "column-move-right": "Move column right (same monitor)",
+    "column-move-to-output-left": "Move column to monitor left",
+    "column-move-to-output-right": "Move column to monitor right",
+    "column-move-to-output-up": "Move column to monitor up",
+    "column-move-to-output-down": "Move column to monitor down",
+    "column-move-to-workspace-next": "Move column to next workspace",
+    "column-move-to-workspace-previous": "Move column to previous workspace",
+    "output-focus-next": "Focus next monitor",
+    "window-move-to-output-next": "Move window to next monitor",
+    "window-modify-primary-extent -0.1": "Shrink column width (-10%)",
+    "window-modify-primary-extent 0.1": "Grow column width (+10%)",
+    "window-modify-secondary-extent -0.1": "Shrink window height (-10%)",
+    "window-modify-secondary-extent 0.1": "Grow window height (+10%)",
+    "window-focus-or-output-left": "Focus left",
+    "window-focus-or-output-right": "Focus right",
+    "window-focus-or-workspace-up": "Focus up",
+    "window-focus-or-workspace-down": "Focus down",
+    "column-focus-first": "Focus first column",
+    "column-focus-last": "Focus last column",
+    "window-move-or-output-left": "Move window / column left",
+    "window-move-or-output-right": "Move window / column right",
+    "window-move-or-workspace-up": "Move window up",
+    "window-move-or-workspace-down": "Move window down",
+    "window-move-left": "Move window left (same monitor)",
+    "window-move-right": "Move window right (same monitor)",
+    "window-move-up": "Move window up (same workspace)",
+    "window-move-down": "Move window down (same workspace)",
+    "column-move-to-first": "Move column to first position",
+    "column-move-to-last": "Move column to last position",
+    "output-focus-left": "Focus monitor left",
+    "output-focus-right": "Focus monitor right",
+    "output-focus-up": "Focus monitor up",
+    "output-focus-down": "Focus monitor down",
+    "window-move-to-output-left": "Move window to monitor left",
+    "window-move-to-output-right": "Move window to monitor right",
+    "window-move-to-output-up": "Move window to monitor up",
+    "window-move-to-output-down": "Move window to monitor down",
+    "workspace-next": "Next workspace on this monitor",
+    "workspace-previous": "Previous workspace on this monitor",
+    "workspace-focus-last": "Previous active workspace (back & forth)",
+    "window-move-to-workspace-next": "Move window to next workspace",
+    "window-move-to-workspace-previous": "Move window to previous workspace",
+    "window-focus-right": "Focus right",
+    "window-focus-left": "Focus left",
+}
+
+
 NIRI_ACTION_DESCRIPTIONS = {
     'spawn "noctalia" "msg" "panel-toggle" "launcher"': "Application launcher",
     "toggle-overview": "Toggle workspace overview",
@@ -172,8 +291,48 @@ def get_niri_rows() -> list[str]:
     return rows
 
 
+def describe_umbriel_action(action: str) -> str:
+    if action in UMBRIEL_ACTION_DESCRIPTIONS:
+        return UMBRIEL_ACTION_DESCRIPTIONS[action]
+    if "desktop.sh doctor" in action:
+        return "Desktop health check"
+    m = re.match(r"^workspace-switch (\d+)$", action)
+    if m:
+        return f"Focus workspace {m.group(1)}"
+    m = re.match(r"^window-move-to-workspace (\d+)$", action)
+    if m:
+        return f"Move window to workspace {m.group(1)} and follow it"
+    m = re.match(r"^window-move-to-workspace-silent (\d+)$", action)
+    if m:
+        return f"Send window to workspace {m.group(1)} silently"
+    return action
+
+
+def get_umbriel_rows() -> list[str]:
+    config_path = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", pathlib.Path.home() / ".config")) / "umbriel" / "config.toml"
+    text = config_path.read_text(encoding="utf-8")
+    m = re.search(r"(?m)^\[keybinds\]\s*(.*?)\Z", text, re.DOTALL)
+    if not m:
+        return []
+    rows = []
+    str_re = re.compile(r'^\s*"([^"]+)"\s*=\s*"([^"]+)"\s*$')
+    tbl_re = re.compile(r'^\s*"([^"]+)"\s*=\s*\{.*?\baction\s*=\s*"([^"]+)".*\}\s*$')
+    for line in m.group(1).splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        sm = str_re.match(line) or tbl_re.match(line)
+        if not sm:
+            continue
+        combo, action = sm.group(1), sm.group(2)
+        rows.append(f"{format_niri_key(combo):<32}  {describe_umbriel_action(action)}")
+    return rows
+
+
 try:
-    if is_niri():
+    if is_umbriel():
+        rows = get_umbriel_rows()
+    elif is_niri():
         rows = get_niri_rows()
     else:
         result = subprocess.run(["hyprctl", "binds", "-j"], check=True, capture_output=True, text=True)
