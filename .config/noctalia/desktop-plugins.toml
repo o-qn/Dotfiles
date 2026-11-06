@@ -19,6 +19,12 @@ use_mpris_filter = false
 input_devices = ["/dev/input/by-id/usb-SteelSeries_SteelSeries_Apex_7_TKL*-event-kbd"]
 executable_path = "evtest"
 
+[widget.layout-main]
+type = "desktop/umbriel-layout:main"
+
+[widget.layout-portrait]
+type = "desktop/umbriel-layout:portrait"
+
 # Wallpaper pickers live inside the Control Center.
 
 [[control_center.shortcuts]]
