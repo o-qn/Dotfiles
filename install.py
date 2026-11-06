@@ -10,14 +10,17 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parent
-CONFIG_DIRS = ('hypr', 'kitty', 'noctalia', 'btop', 'qt6ct', 'nvim')
+CONFIG_DIRS = ('hypr', 'umbriel', 'kitty', 'noctalia', 'btop', 'qt6ct', 'nvim')
 
 
 def targets(home):
     return [home / '.config' / name for name in CONFIG_DIRS] + [
         home / '.config/gwenviewrc',
         home / '.config/easyeffectsrc',
+        home / '.local/bin/umbriel-toggle-vrr',
+        home / '.local/bin/umbriel-layout',
         home / '.local/share/noctalia/plugins/displays',
+        home / '.local/share/noctalia/plugins/umbriel-layout',
         home / '.local/state/noctalia/settings.toml',
         *[home / '.local/share/wallpapers' / p.name for p in sorted((ROOT / '.local/share/wallpapers').iterdir())],
     ]
@@ -101,6 +104,8 @@ def validate():
         deploy(home)
         env = dict(os.environ, HYPR_CONFIG_ROOT=str(home / '.config/hypr'))
         subprocess.run(['Hyprland', '--verify-config', '-c', str(home / '.config/hypr/hyprland.lua')], env=env, check=True)
+        if shutil.which('umbriel'):
+            subprocess.run(['umbriel', 'config', 'validate', '-c', str(home / '.config/umbriel/config.toml')], check=True)
         result = subprocess.run(['noctalia', 'config', 'validate', str(home / '.config/noctalia/config.toml')], capture_output=True, text=True, check=True)
         print(result.stdout, end='')
         if 'WARN ' in result.stdout + result.stderr:
