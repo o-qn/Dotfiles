@@ -1,7 +1,13 @@
 config_version = 15
 
 [bar.default]
-start = [ "launcher", "workspaces", "workspace-add-main", "active_window" ]
+center = [ "clock", "cat", "volume" ]
+end = [ "tray", "keyboard_layout", "network", "media", "notifications", "bluetooth", "control-center" ]
+start = [ "launcher", "workspaces", "workspace-add-main", "layout-main", "active_window" ]
+
+    [bar.default.monitor."Sceptre L24"]
+    end = [ "tray", "keyboard_layout", "network", "notifications", "bluetooth", "control-center" ]
+    start = [ "launcher", "workspaces", "workspace-add-portrait", "layout-portrait", "active_window" ]
 
 [lockscreen_widgets]
 enabled = false
@@ -130,34 +136,44 @@ widget_order = [
         show_unlock_hint = true
         show_weather = true
 
+[plugins]
+enabled = [
+    "noctalia/wallhaven",
+    "noctalia/mpvpaper",
+    "noctalia/bongocat",
+    "noctalia/bitwarden",
+    "desktop/displays",
+    "desktop/umbriel-layout"
+]
+
 [theme]
 builtin = "Dracula"
 mode = "dark"
 source = "wallpaper"
-wallpaper_scheme = "dysfunctional"
+wallpaper_scheme = "faithful"
 
     [theme.templates]
-    builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "mango", "niri", "qt" ]
+    builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "mango", "niri", "qt", "umbriel" ]
     community_ids = [ "opencode", "papirus-icons", "fzf" ]
     enable_community_templates = true
 
 [wallpaper.default]
-path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.last]
-path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.monitors.DP-2]
-path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.monitors.DP-3]
-path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [[wallpaper.favorite]]
 palette_source = "wallpaper"
 path = "/home/qn/.local/share/wallpapers/abstract-swirls.jpg"
 theme_mode = "dark"
-wallpaper_scheme = "vibrant"
+wallpaper_scheme = "m3-content"
 
 [[wallpaper.favorite]]
 palette_source = "wallpaper"
@@ -176,3 +192,9 @@ palette_source = "wallpaper"
 path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
 theme_mode = "dark"
 wallpaper_scheme = "dysfunctional"
+
+[[wallpaper.favorite]]
+palette_source = "wallpaper"
+path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
+theme_mode = "dark"
+wallpaper_scheme = "faithful"
