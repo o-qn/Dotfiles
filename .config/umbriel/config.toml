@@ -1,0 +1,448 @@
+# Umbriel compositor configuration
+# Unified from Hyprland + Niri configs and integrated with Noctalia shell.
+# Validate offline with: umbriel config validate
+
+[include]
+files = [
+    "/usr/share/umbriel/effects/border/pulse/effect.toml",
+    "/usr/share/umbriel/effects/border/audio/effect.toml",
+    "/usr/share/umbriel/effects/cursor/trail/effect.toml",
+    "/usr/share/umbriel/effects/cursor/glow/effect.toml",
+    "/usr/share/umbriel/effects/animation/squash/effect.toml",
+    "/usr/share/umbriel/effects/animation/workspace_wipe/effect.toml",
+]
+
+[include.optional]
+files = [
+    "vrr-override.toml",
+    "layouts-override.toml",
+    "noctalia.toml",
+]
+
+# ─── General & Session ───────────────────────────────────────────────────────
+
+[general]
+autostart = [
+    "noctalia --daemon",
+]
+xwayland_native_resolution = true
+xwayland_primary_output = "DP-2"
+attach_modal_dialogs = true
+
+[environment]
+QT_QPA_PLATFORM = "wayland;xcb"
+QT_QPA_PLATFORMTHEME = "qt6ct"
+ELECTRON_OZONE_PLATFORM_HINT = "auto"
+XCURSOR_SIZE = "24"
+XCURSOR_THEME = "breeze_cursors"
+
+# ─── Monitors / Outputs ──────────────────────────────────────────────────────
+# Portrait left monitor (DP-3: Sceptre L24, 1080x1920 @ (0, 11))
+# Primary right monitor (DP-2: G2721P, 2560x1440@200 at 1.25x -> 2048x1152 @ (1080, 388))
+
+[output.DP-2]
+mode = "2560x1440@200"
+scale = 1.25
+transform = "normal"
+position = [1080, 388]
+vrr = "fullscreen"
+bit_depth = 10
+workspaces = 10
+focus_at_startup = true
+
+[output.DP-3]
+mode = "1920x1080@144"
+scale = 1.0
+transform = "90"
+position = [0, 11]
+vrr = "fullscreen"
+workspaces = 10
+
+# ─── Appearance & Effects ────────────────────────────────────────────────────
+
+[appearance]
+corner_radius = 12
+border_width = 2
+prefer_no_csd = true
+
+[appearance.blur]
+enabled = true
+radius = 4
+passes = 2
+noise = 0.008
+brightness = 1.0
+contrast = 1.0
+
+[appearance.shadow]
+enabled = true
+softness = 20
+offset_x = 0
+offset_y = 4
+
+[colors]
+background = "#1b2141FF"
+text_primary = "#f2f2f3FF"
+text_muted = "#afb0b6FF"
+accent_primary = "#677de4FF"
+accent_secondary = "#845cd6FF"
+warning = "#ba66ccFF"
+error = "#fd4663FF"
+insert_hint = "#ba66cc80"
+backdrop = "#1e2548FF"
+
+[colors.border]
+focused = "#677de4FF"
+unfocused = "#1e2548FF"
+outer = "#12162bFF"
+
+[colors.overview]
+background_tint = "#12162b88"
+badge = "#677de4FF"
+workspace_background = "#12162bFF"
+
+[effects.pool.borders]
+kind = "border"
+choose = ["pulse", "audio"]
+
+[effects.pool.cursors]
+kind = "cursor"
+choose = ["trail", "glow"]
+
+# ─── Input ───────────────────────────────────────────────────────────────────
+
+[input.keyboard]
+layout = "us,ara"
+repeat_delay = 250
+repeat_rate = 35
+numlock_toggle = true
+
+[input.focus]
+follows_mouse = true
+follows_mouse_max_scroll = 33.0
+hover_raises = false
+
+[input.touchpad]
+tap = true
+natural_scroll = false
+
+[input.cursor]
+theme = "breeze_cursors"
+size = 24
+
+[input.drag_edge_scroll]
+enabled = true
+
+# ─── Workspaces, Layout & Overview ───────────────────────────────────────────
+
+[workspaces]
+back_and_forth = true
+
+[layout]
+mode = "scrolling"
+gap = 12
+extent_presets = [0.33333, 0.5, 0.66667, 1.0]
+
+[layout.scrolling]
+default_extent_fraction = 0.5
+center_focused = "never"
+
+[layout.dwindle]
+preserve_split = true
+
+[layout.tabs]
+middle_click_closes = true
+new_tab_position = "after_active"
+
+[overview]
+zoom = 0.5
+shortcuts = true
+background_blur = false
+
+[hot_corners.top_left]
+enabled = false
+
+[animation.dialogs]
+dim = 0.3
+
+# ─── Window Rules ────────────────────────────────────────────────────────────
+
+# Global baseline: opt-in blur only (matching Hyprland & Niri glass policy)
+[[window_rule]]
+match.app_id = ".*"
+blur = false
+
+# Glass terminals & file manager (active: 0.90 opacity, inactive: 0.84 opacity)
+[[window_rule]]
+match.app_id = "^([Nn]emo)$"
+match.is_focused = true
+opacity = 0.90
+blur = true
+blur_popups = true
+
+[[window_rule]]
+match.app_id = "^([Nn]emo)$"
+match.is_focused = false
+opacity = 0.84
+blur = true
+blur_popups = true
+
+[[window_rule]]
+match.app_id = "^(kitty|desktop-doctor)$"
+blur = true
+blur_popups = true
+
+# Zen Browser: crisp, opaque, full-width column
+[[window_rule]]
+match.app_id = "^([Zz]en(-browser|-alpha|-beta|-twilight)?|app\\.zen_browser\\.zen)$"
+default_maximize = true
+opacity = 1.0
+blur = false
+
+# Stremio: crisp video playback
+[[window_rule]]
+match.app_id = "^([Ss]tremio|com\\.stremio\\.Stremio)$"
+opacity = 1.0
+blur = false
+
+# Utility dialogs & settings
+[[window_rule]]
+match.app_id = "^(org\\.pulseaudio\\.pavucontrol|pavucontrol|blueman-manager|nm-connection-editor|qt6ct|kvantummanager)$"
+default_floating = true
+default_floating_size_px = { width = 900, height = 650 }
+
+[[window_rule]]
+match.app_id = "^desktop-doctor$"
+default_floating = true
+default_floating_size_px = { width = 1000, height = 740 }
+
+[[window_rule]]
+match.app_id = "^Noctalia$"
+default_floating = true
+default_floating_size_px = { width = 1020, height = 900 }
+
+[[window_rule]]
+match.app_id = "^UmbrielSharePicker$"
+default_floating = true
+default_floating_size_px = { width = 800, height = 600 }
+
+# Picture-in-Picture
+[[window_rule]]
+match.title = "^[Pp]icture[- ][Ii]n[- ][Pp]icture$"
+default_floating = true
+default_pinned = true
+
+# Notification toasts
+[[window_rule]]
+match.title = "^notificationtoasts_"
+default_floating = true
+default_focused = false
+
+# Games & Steam: route to main 200Hz monitor with VRR & pointer confinement
+[[window_rule]]
+match.app_id = "^(steam_app_.*|gamescope|cs2|dota2)$"
+default_output = "DP-2"
+vrr = "always"
+confine_pointer = true
+blur = false
+
+[[window_rule]]
+match.content_type = "game"
+default_output = "DP-2"
+vrr = "always"
+confine_pointer = true
+blur = false
+
+# ─── Layer Rules ─────────────────────────────────────────────────────────────
+# Blur only actual Noctalia cards (bar, dock, notifications, OSD, panels) with
+# blur_ignore_alpha = 0.15 (matching Hyprland's ignore_alpha = 0.15) and never
+# blur Noctalia's full-screen click-shield or backdrop layers.
+
+[[layer_rule]]
+match.namespace = "^noctalia-(bar-.*|dock|notification|osd|panel|attached-panel|overview-launcher|window-switcher)$"
+blur = true
+blur_ignore_alpha = 0.15
+
+[[layer_rule]]
+match.namespace = "^noctalia-(.*click-shield.*|backdrop.*|wallpaper.*|background.*|screen-corner.*|LockScreen.*)$"
+blur = false
+
+# ─── Keybindings (Exact Niri + Hyprland Muscle Memory) ───────────────────────
+
+[keybinds]
+# Noctalia Desktop Shell Hooks
+"Mod+R"               = "spawn noctalia msg panel-toggle launcher"
+"Mod+D"               = { action = "overview-toggle", repeat = false }
+"Mod+V"               = "spawn noctalia msg panel-toggle clipboard"
+"Mod+M"               = "spawn noctalia msg panel-toggle session"
+"Mod+T"               = "spawn noctalia msg panel-toggle control-center"
+"Mod+N"               = "spawn noctalia msg panel-toggle control-center notifications"
+"Mod+Ctrl+N"          = "spawn noctalia msg notification-dnd-toggle"
+"Mod+W"               = "spawn noctalia msg panel-toggle wallpaper"
+"Mod+Ctrl+S"          = "spawn noctalia msg settings-toggle"
+"Mod+Ctrl+B"          = "spawn noctalia msg bar-toggle"
+"Mod+Ctrl+I"          = "spawn noctalia msg caffeine-toggle"
+"Mod+L"               = "spawn noctalia msg session lock"
+"Alt+Tab"             = "spawn noctalia msg window-switcher"
+
+# Screenshots via Noctalia
+"Ctrl+Alt+S"          = "spawn noctalia msg screenshot-region"
+"Print"               = "spawn noctalia msg screenshot-region"
+"Ctrl+Alt+F"          = "spawn noctalia msg screenshot-fullscreen"
+"Ctrl+Alt+A"          = "spawn noctalia msg screenshot-annotate"
+
+# Media & Hardware keys via Noctalia (works when locked)
+"XF86AudioRaiseVolume"  = { action = "spawn noctalia msg volume-up 5", allow_when_locked = true, repeat = true }
+"XF86AudioLowerVolume"  = { action = "spawn noctalia msg volume-down 5", allow_when_locked = true, repeat = true }
+"XF86AudioMute"         = { action = "spawn noctalia msg volume-mute", allow_when_locked = true }
+"XF86AudioMicMute"      = { action = "spawn noctalia msg mic-mute", allow_when_locked = true }
+"XF86AudioNext"         = { action = "spawn noctalia msg media next", allow_when_locked = true }
+"XF86AudioPrev"         = { action = "spawn noctalia msg media previous", allow_when_locked = true }
+"XF86AudioPlay"         = { action = "spawn noctalia msg media toggle", allow_when_locked = true }
+"XF86AudioPause"        = { action = "spawn noctalia msg media toggle", allow_when_locked = true }
+"XF86MonBrightnessUp"   = { action = "spawn noctalia msg brightness-up", allow_when_locked = true, repeat = true }
+"XF86MonBrightnessDown" = { action = "spawn noctalia msg brightness-down", allow_when_locked = true, repeat = true }
+
+# Applications (matching Hyprland keybinds.lua & Niri config.kdl)
+"Mod+Q"               = "spawn kitty"
+"Mod+Return"          = "spawn kitty"
+"Mod+E"               = "spawn ~/.config/hypr/scripts/desktop.sh files"
+"Mod+B"               = "spawn ~/.config/hypr/scripts/desktop.sh browser"
+"Mod+Escape"          = "spawn kitty -e btop"
+"Mod+Ctrl+Q"          = "spawn kitty --class desktop-doctor --title 'Desktop Check' -e ~/.config/hypr/scripts/desktop.sh doctor"
+
+# Layout Switching (English / Arabic)
+"Mod+Space"           = "keyboard-layout-next"
+
+# Windows & Columns (Hyprland shortcuts with Niri perspective adjustments)
+"Mod+C"               = { action = "window-close", repeat = false }
+"Mod+Shift+Space"     = "window-toggle-floating"
+"Mod+Ctrl+Space"      = "window-focus-switch-floating"
+"Mod+F"               = "window-toggle-fullscreen"
+"Mod+Shift+F"         = "window-toggle-maximize"
+
+# Column widths / center / height (Mod+P family from Niri)
+"Mod+P"               = "window-cycle-primary-extent"
+"Mod+Shift+P"         = "column-center"
+"Mod+Ctrl+P"          = "window-cycle-secondary-extent"
+
+# Stacking & Tabs
+"Mod+J"               = "window-consume-or-expel-left"
+"Mod+Shift+J"         = "column-toggle-tabbed"
+
+"Mod+BracketLeft"     = "window-consume-or-expel-left"
+"Mod+BracketRight"    = "window-consume-or-expel-right"
+"Mod+Comma"           = "window-consume-from-right"
+"Mod+Period"          = "window-consume-right"
+"Mod+Minus"           = "window-modify-primary-extent -0.1"
+"Mod+Equal"           = "window-modify-primary-extent 0.1"
+"Mod+Shift+Minus"     = "window-modify-secondary-extent -0.1"
+"Mod+Shift+Equal"     = "window-modify-secondary-extent 0.1"
+
+# Navigation / Focus (Arrows, Mod+A/S, Home/End)
+"Mod+A"               = "window-focus-left"
+"Mod+S"               = "window-focus-right"
+"Mod+Left"            = "window-focus-left"
+"Mod+Right"           = "window-focus-right"
+"Mod+Up"              = "window-focus-or-workspace-up"
+"Mod+Down"            = "window-focus-or-workspace-down"
+"Mod+Home"            = "column-focus-first"
+"Mod+End"             = "column-focus-last"
+
+# Moving Columns & Windows (Mod+Shift+Arrows & Mod+Ctrl+Arrows)
+"Mod+Shift+Left"      = "window-move-or-output-left"
+"Mod+Shift+Right"     = "window-move-or-output-right"
+"Mod+Shift+Up"        = "window-move-or-workspace-up"
+"Mod+Shift+Down"      = "window-move-or-workspace-down"
+"Mod+Ctrl+Left"       = "column-move-left"
+"Mod+Ctrl+Right"      = "column-move-right"
+"Mod+Ctrl+Up"         = "window-move-up"
+"Mod+Ctrl+Down"       = "window-move-down"
+"Mod+Ctrl+Home"       = "column-move-to-first"
+"Mod+Ctrl+End"        = "column-move-to-last"
+
+# Explicit Monitor Focus & Movement
+"Mod+Alt+Left"        = "output-focus-left"
+"Mod+Alt+Right"       = "output-focus-right"
+"Mod+Alt+Up"          = "output-focus-up"
+"Mod+Alt+Down"        = "output-focus-down"
+"Mod+Shift+Ctrl+Left" = "column-move-to-output-left"
+"Mod+Shift+Ctrl+Right"= "column-move-to-output-right"
+"Mod+Shift+Ctrl+Up"   = "column-move-to-output-up"
+"Mod+Shift+Ctrl+Down" = "column-move-to-output-down"
+"Mod+Grave"           = "output-focus-next"
+"Mod+Shift+Grave"     = "window-move-to-output-next"
+"Mod+Ctrl+Grave"      = "window-move-to-output-next"
+
+# Workspaces Focus & Movement (1..10: Mod+Shift moves & follows, Mod+Ctrl sends silently)
+"Mod+1"               = "workspace-switch 1"
+"Mod+2"               = "workspace-switch 2"
+"Mod+3"               = "workspace-switch 3"
+"Mod+4"               = "workspace-switch 4"
+"Mod+5"               = "workspace-switch 5"
+"Mod+6"               = "workspace-switch 6"
+"Mod+7"               = "workspace-switch 7"
+"Mod+8"               = "workspace-switch 8"
+"Mod+9"               = "workspace-switch 9"
+"Mod+0"               = "workspace-switch 10"
+
+"Mod+Shift+1"         = "window-move-to-workspace 1"
+"Mod+Shift+2"         = "window-move-to-workspace 2"
+"Mod+Shift+3"         = "window-move-to-workspace 3"
+"Mod+Shift+4"         = "window-move-to-workspace 4"
+"Mod+Shift+5"         = "window-move-to-workspace 5"
+"Mod+Shift+6"         = "window-move-to-workspace 6"
+"Mod+Shift+7"         = "window-move-to-workspace 7"
+"Mod+Shift+8"         = "window-move-to-workspace 8"
+"Mod+Shift+9"         = "window-move-to-workspace 9"
+"Mod+Shift+0"         = "window-move-to-workspace 10"
+
+"Mod+Ctrl+1"          = "window-move-to-workspace-silent 1"
+"Mod+Ctrl+2"          = "window-move-to-workspace-silent 2"
+"Mod+Ctrl+3"          = "window-move-to-workspace-silent 3"
+"Mod+Ctrl+4"          = "window-move-to-workspace-silent 4"
+"Mod+Ctrl+5"          = "window-move-to-workspace-silent 5"
+"Mod+Ctrl+6"          = "window-move-to-workspace-silent 6"
+"Mod+Ctrl+7"          = "window-move-to-workspace-silent 7"
+"Mod+Ctrl+8"          = "window-move-to-workspace-silent 8"
+"Mod+Ctrl+9"          = "window-move-to-workspace-silent 9"
+"Mod+Ctrl+0"          = "window-move-to-workspace-silent 10"
+
+"Mod+Page_Down"       = "workspace-next"
+"Mod+Page_Up"         = "workspace-previous"
+"Mod+Ctrl+Page_Down"  = "column-move-to-workspace-next"
+"Mod+Ctrl+Page_Up"    = "column-move-to-workspace-previous"
+
+# Mouse Wheel Workspace & Column Scrolling
+"Mod+WheelDown"            = { action = "workspace-next", cooldown_ms = 150 }
+"Mod+WheelUp"              = { action = "workspace-previous", cooldown_ms = 150 }
+"Mod+Ctrl+WheelDown"       = { action = "column-move-to-workspace-next", cooldown_ms = 150 }
+"Mod+Ctrl+WheelUp"         = { action = "column-move-to-workspace-previous", cooldown_ms = 150 }
+"Mod+Shift+WheelDown"      = "window-focus-right"
+"Mod+Shift+WheelUp"        = "window-focus-left"
+"Mod+Ctrl+Shift+WheelDown" = "column-move-right"
+"Mod+Ctrl+Shift+WheelUp"   = "column-move-left"
+"Mod+WheelRight"           = "window-focus-right"
+"Mod+WheelLeft"            = "window-focus-left"
+"Mod+Ctrl+WheelRight"      = "column-move-right"
+"Mod+Ctrl+WheelLeft"       = "column-move-left"
+
+# Help, Reload, Monitor Toggle, VRR & Session
+"Mod+F1"              = "spawn ~/.config/hypr/scripts/desktop.sh help"
+"Mod+Shift+Slash"     = "cheatsheet-toggle"
+"Mod+Shift+R"         = "spawn ~/.config/hypr/scripts/desktop.sh reload"
+"Mod+Ctrl+M"          = "output-toggle DP-3"
+"Mod+Shift+E"         = "session-quit"
+"Mod+Shift+D"         = "spawn ~/.local/bin/umbriel-toggle-vrr"
+
+# Umbriel Multi-Layout & Shader Effects
+"Mod+Alt+Space"       = "spawn ~/.local/bin/umbriel-layout toggle"
+"Mod+Alt+1"           = "spawn ~/.local/bin/umbriel-layout scrolling"
+"Mod+Alt+2"           = "spawn ~/.local/bin/umbriel-layout dwindle"
+"Mod+Alt+3"           = "spawn ~/.local/bin/umbriel-layout master"
+"Mod+Alt+4"           = "spawn ~/.local/bin/umbriel-layout stacking"
+"Mod+Alt+J"           = "layout-toggle-split"
+"Mod+Alt+BracketLeft" = "layout-master-count-decrease"
+"Mod+Alt+BracketRight"= "layout-master-count-increase"
+"Mod+Ctrl+E"          = "effect-border-cycle borders"
+"Mod+Alt+E"           = "effect-border-toggle"
+"Mod+Alt+C"           = "effect-cursor-toggle"
