@@ -37,7 +37,7 @@ umbriel msg config-reload >/dev/null 2>&1 || true
 
 case "$next" in
     fullscreen) label="Smart Auto (Fullscreen + Games)" ;;
-    always)     label="Force Enabled (Always On)" ;;
+    always)     label="Enabled (Always On)" ;;
     disabled)   label="Disabled (Fixed 200Hz)" ;;
 esac
 

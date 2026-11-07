@@ -15,7 +15,7 @@ files = [
 [include.optional]
 files = [
     "vrr-override.toml",
-    "layouts-override.toml",
+    "effects-override.toml",
     "noctalia.toml",
 ]
 
@@ -35,6 +35,7 @@ QT_QPA_PLATFORMTHEME = "qt6ct"
 ELECTRON_OZONE_PLATFORM_HINT = "auto"
 XCURSOR_SIZE = "24"
 XCURSOR_THEME = "breeze_cursors"
+WAYLANDDRV_PRIMARY_MONITOR = "DP-2"
 
 # ─── Monitors / Outputs ──────────────────────────────────────────────────────
 # Portrait left monitor (DP-3: Sceptre L24, 1080x1920 @ (0, 11))
@@ -45,7 +46,6 @@ mode = "2560x1440@200"
 scale = 1.25
 transform = "normal"
 position = [1080, 388]
-vrr = "fullscreen"
 bit_depth = 10
 workspaces = 10
 focus_at_startup = true
@@ -79,26 +79,7 @@ softness = 20
 offset_x = 0
 offset_y = 4
 
-[colors]
-background = "#1b2141FF"
-text_primary = "#f2f2f3FF"
-text_muted = "#afb0b6FF"
-accent_primary = "#677de4FF"
-accent_secondary = "#845cd6FF"
-warning = "#ba66ccFF"
-error = "#fd4663FF"
-insert_hint = "#ba66cc80"
-backdrop = "#1e2548FF"
-
-[colors.border]
-focused = "#677de4FF"
-unfocused = "#1e2548FF"
-outer = "#12162bFF"
-
-[colors.overview]
-background_tint = "#12162b88"
-badge = "#677de4FF"
-workspace_background = "#12162bFF"
+# Colors & border colors are dynamically managed by Noctalia in noctalia.toml
 
 [effects.pool.borders]
 kind = "border"
@@ -138,7 +119,7 @@ enabled = true
 back_and_forth = true
 
 [layout]
-mode = "scrolling"
+mode = "dwindle"
 gap = 12
 extent_presets = [0.33333, 0.5, 0.66667, 1.0]
 
@@ -434,15 +415,15 @@ blur = false
 "Mod+Shift+E"         = "session-quit"
 "Mod+Shift+D"         = "spawn ~/.local/bin/umbriel-toggle-vrr"
 
-# Umbriel Multi-Layout & Shader Effects
-"Mod+Alt+Space"       = "spawn ~/.local/bin/umbriel-layout toggle"
-"Mod+Alt+1"           = "spawn ~/.local/bin/umbriel-layout scrolling"
-"Mod+Alt+2"           = "spawn ~/.local/bin/umbriel-layout dwindle"
-"Mod+Alt+3"           = "spawn ~/.local/bin/umbriel-layout master"
-"Mod+Alt+4"           = "spawn ~/.local/bin/umbriel-layout stacking"
+# Umbriel Multi-Layout & Shader Effects (Workspace-specific)
+"Mod+Alt+Space"       = "workspace-set-layout toggle dwindle scrolling master stacking"
+"Mod+Alt+1"           = "workspace-set-layout dwindle"
+"Mod+Alt+2"           = "workspace-set-layout scrolling"
+"Mod+Alt+3"           = "workspace-set-layout master"
+"Mod+Alt+4"           = "workspace-set-layout stacking"
 "Mod+Alt+J"           = "layout-toggle-split"
 "Mod+Alt+BracketLeft" = "layout-master-count-decrease"
 "Mod+Alt+BracketRight"= "layout-master-count-increase"
-"Mod+Ctrl+E"          = "effect-border-cycle borders"
-"Mod+Alt+E"           = "effect-border-toggle"
-"Mod+Alt+C"           = "effect-cursor-toggle"
+"Mod+Ctrl+E"          = "spawn ~/.local/bin/umbriel-effects border cycle"
+"Mod+Alt+E"           = "spawn ~/.local/bin/umbriel-effects border toggle"
+"Mod+Alt+C"           = "spawn ~/.local/bin/umbriel-effects cursor cycle"

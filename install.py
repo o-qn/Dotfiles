@@ -19,6 +19,7 @@ def targets(home):
         home / '.config/easyeffectsrc',
         home / '.local/bin/umbriel-toggle-vrr',
         home / '.local/bin/umbriel-layout',
+        home / '.local/bin/umbriel-effects',
         home / '.local/share/noctalia/plugins/displays',
         home / '.local/share/noctalia/plugins/umbriel-layout',
         home / '.local/state/noctalia/settings.toml',

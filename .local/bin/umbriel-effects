@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""Query and control Umbriel layout, VRR, border shaders, and cursor shaders for the Noctalia Control Center."""
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "umbriel"
+VRR_FILE = CONFIG_DIR / "vrr-override.toml"
+EFFECTS_FILE = CONFIG_DIR / "effects-override.toml"
+VRR_SCRIPT = Path.home() / ".local/bin/umbriel-toggle-vrr"
+LAYOUT_SCRIPT = Path.home() / ".local/bin/umbriel-layout"
+
+BORDER_MODES = ("none", "pulse", "audio")
+CURSOR_MODES = ("none", "trail", "glow")
+
+
+def run_json(args: list[str]):
+    try:
+        return json.loads(subprocess.check_output(["umbriel", *args, "-j"], text=True))
+    except Exception:
+        return []
+
+
+def read_vrr_mode() -> str:
+    if VRR_FILE.is_file():
+        text = VRR_FILE.read_text(encoding="utf-8")
+        m = re.search(r'vrr\s*=\s*"([^"]+)"', text)
+        if m and m.group(1) in ("fullscreen", "always", "disabled"):
+            return m.group(1)
+    return "fullscreen"
+
+
+def read_effects() -> tuple[str, str]:
+    border = "none"
+    cursor = "none"
+    if EFFECTS_FILE.is_file():
+        text = EFFECTS_FILE.read_text(encoding="utf-8")
+        mb = re.search(r'border\s*=\s*"([^"]*)"', text)
+        mc = re.search(r'cursor\s*=\s*"([^"]*)"', text)
+        if mb and mb.group(1) in ("pulse", "audio"):
+            border = mb.group(1)
+        if mc and mc.group(1) in ("trail", "glow"):
+            cursor = mc.group(1)
+    return border, cursor
+
+
+def write_effects(border: str, cursor: str) -> None:
+    b_val = "" if border == "none" else border
+    c_val = "" if cursor == "none" else cursor
+    EFFECTS_FILE.write_text(
+        "# Managed by ~/.local/bin/umbriel-effects\n"
+        "[effects]\n"
+        f'border = "{b_val}"\n'
+        f'cursor = "{c_val}"\n',
+        encoding="utf-8",
+    )
+
+
+def clear_runtime_window_effects() -> None:
+    effects_data = run_json(["effects"])
+    if isinstance(effects_data, dict):
+        for owner in effects_data.get("owners", []):
+            if isinstance(owner, dict) and owner.get("type") == "window":
+                wid = owner.get("id")
+                slot = owner.get("slots", {}).get("border", {})
+                if wid and slot.get("source") == "runtime":
+                    subprocess.run(["umbriel", "msg", "effect-border-reset", str(wid)], check=False)
+        subprocess.run(["umbriel", "msg", "effect-cursor-reset"], check=False)
+
+
+def get_status() -> dict:
+    workspaces = run_json(["workspaces"])
+    outputs = run_json(["outputs"])
+
+    focused_ws = next((w for w in workspaces if isinstance(w, dict) and w.get("focused")), None)
+    if not focused_ws and workspaces:
+        focused_ws = next((w for w in workspaces if isinstance(w, dict) and w.get("active")), workspaces[0])
+
+    dp2 = next((o for o in outputs if isinstance(o, dict) and o.get("name") == "DP-2"), {})
+    border, cursor = read_effects()
+
+    return {
+        "workspace": str(focused_ws.get("name") or focused_ws.get("index") or "1") if focused_ws else "1",
+        "output": str(focused_ws.get("output") or "DP-2") if focused_ws else "DP-2",
+        "layout": str(focused_ws.get("layout") or "dwindle") if focused_ws else "dwindle",
+        "layout_override": bool(focused_ws.get("layout_override")) if focused_ws else False,
+        "vrr_mode": read_vrr_mode(),
+        "vrr_active": bool(dp2.get("adaptive_sync")),
+        "border_effect": border,
+        "cursor_effect": cursor,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="cmd")
+
+    sub.add_parser("status")
+
+    p_layout = sub.add_parser("layout")
+    p_layout.add_argument("mode", choices=("dwindle", "scrolling", "master", "stacking", "toggle"))
+
+    p_vrr = sub.add_parser("vrr")
+    p_vrr.add_argument("mode", choices=("fullscreen", "always", "disabled", "toggle"))
+
+    p_border = sub.add_parser("border")
+    p_border.add_argument("mode", choices=(*BORDER_MODES, "cycle", "toggle"))
+
+    p_cursor = sub.add_parser("cursor")
+    p_cursor.add_argument("mode", choices=(*CURSOR_MODES, "cycle", "toggle"))
+
+    args = parser.parse_args()
+    cmd = args.cmd or "status"
+
+    if cmd == "layout":
+        subprocess.run(["python3", str(LAYOUT_SCRIPT), args.mode], check=False)
+    elif cmd == "vrr":
+        subprocess.run([str(VRR_SCRIPT), args.mode], check=False)
+    elif cmd == "border":
+        border, cursor = read_effects()
+        if args.mode == "cycle":
+            idx = BORDER_MODES.index(border) if border in BORDER_MODES else 0
+            border = BORDER_MODES[(idx + 1) % len(BORDER_MODES)]
+        elif args.mode == "toggle":
+            border = "none" if border != "none" else "pulse"
+        else:
+            border = args.mode
+        write_effects(border, cursor)
+        clear_runtime_window_effects()
+        subprocess.run(["umbriel", "msg", "config-reload"], check=False)
+    elif cmd == "cursor":
+        border, cursor = read_effects()
+        if args.mode == "cycle":
+            idx = CURSOR_MODES.index(cursor) if cursor in CURSOR_MODES else 0
+            cursor = CURSOR_MODES[(idx + 1) % len(CURSOR_MODES)]
+        elif args.mode == "toggle":
+            cursor = "none" if cursor != "none" else "trail"
+        else:
+            cursor = args.mode
+        write_effects(border, cursor)
+        clear_runtime_window_effects()
+        subprocess.run(["umbriel", "msg", "config-reload"], check=False)
+
+    print(json.dumps(get_status()))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

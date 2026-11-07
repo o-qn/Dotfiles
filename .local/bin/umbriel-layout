@@ -1,46 +1,15 @@
 #!/usr/bin/env python3
-"""Per-monitor layout manager for Umbriel (keeps DP-2 and DP-3 layouts independent)."""
+"""Workspace-specific layout switcher for Umbriel (supports targeting a specific output from the bar)."""
 import argparse
 import json
-import os
-from pathlib import Path
 import subprocess
 import sys
 
-LAYOUTS = ("scrolling", "dwindle", "master", "stacking")
-OVERRIDE_PATH = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "umbriel" / "layouts-override.toml"
+LAYOUTS = ("dwindle", "scrolling", "master", "stacking")
 
 
 def query_json(args: list[str]):
     return json.loads(subprocess.check_output(["umbriel", *args, "-j"], text=True))
-
-
-def get_current_layouts(workspaces: list[dict]) -> dict[str, str]:
-    result = {"DP-2": "scrolling", "DP-3": "scrolling"}
-    for ws in workspaces:
-        out = ws.get("output")
-        if out in result and ws.get("active"):
-            result[out] = ws.get("layout", "scrolling")
-    return result
-
-
-def write_override(layouts: dict[str, str]) -> None:
-    lines = [
-        "# Managed by ~/.local/bin/umbriel-layout",
-        f"# Per-monitor layout state: DP-2 = {layouts.get('DP-2', 'scrolling')}, DP-3 = {layouts.get('DP-3', 'scrolling')}",
-        "",
-    ]
-    for output in ("DP-2", "DP-3"):
-        mode = layouts.get(output, "scrolling")
-        for idx in range(1, 11):
-            lines.extend([
-                "[[workspace]]",
-                f"index = {idx}",
-                f'output = "{output}"',
-                f'layout.mode = "{mode}"',
-                "",
-            ])
-    OVERRIDE_PATH.write_text("\n".join(lines), encoding="utf-8")
 
 
 def main() -> int:
@@ -55,8 +24,9 @@ def main() -> int:
     focused_output = next((o["name"] for o in outputs if o.get("focused")), "DP-2")
     target_output = args.output or focused_output
 
-    layouts = get_current_layouts(workspaces)
-    current_mode = layouts.get(target_output, "scrolling")
+    target_ws = next((w for w in workspaces if w.get("output") == target_output and w.get("active")), None)
+    current_mode = target_ws.get("layout", "dwindle") if target_ws else "dwindle"
+    target_index = str(target_ws.get("index", 1)) if target_ws else "1"
 
     if args.mode == "toggle":
         idx = LAYOUTS.index(current_mode) if current_mode in LAYOUTS else 0
@@ -64,17 +34,10 @@ def main() -> int:
     else:
         next_mode = args.mode
 
-    layouts[target_output] = next_mode
-    write_override(layouts)
-
-    target_ws = next((w for w in workspaces if w.get("output") == target_output and w.get("active")), None)
-    target_index = str(target_ws.get("index", 1)) if target_ws else "1"
-
     if target_output != focused_output:
         subprocess.run(["umbriel", "msg", "workspace-switch", target_index, "--output", target_output], check=False)
 
     subprocess.run(["umbriel", "msg", "workspace-set-layout", next_mode], check=False)
-    subprocess.run(["umbriel", "msg", "config-reload"], check=False)
 
     if target_output != focused_output:
         focused_ws = next((w for w in workspaces if w.get("output") == focused_output and w.get("active")), None)

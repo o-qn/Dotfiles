@@ -7,8 +7,9 @@ SETUVAR _fisher_jorgebucaran_2F_fisher_files:\x7e/\x2econfig/fish/functions/fish
 SETUVAR _fisher_plugins:jorgebucaran/fisher\x1eilancosman/tide\x40v6
 SETUVAR _fisher_upgraded_to_4_4:\x1d
 SETUVAR _tide_left_items:os\x1epwd\x1egit\x1enewline\x1echaracter
-SETUVAR _tide_right_items:status\x1ecmd_duration\x1econtext\x1ejobs\x1enode\x1epython\x1ejava\x1eruby\x1edistrobox\x1etoolbox
-SETUVAR fish_user_paths:/home/qn/\x2elocal/bin
+SETUVAR _tide_prompt_41094:\x1b\x5b37\x3b49m\x1b\x5b30\x3b47m\x20\uf17c\x20\x1b\x5b37\x3b44m\ue0b0\x1b\x5b44m\x20\x40PWD\x40\x20\x1b\x5b34\x3b43m\ue0b0\x1b\x5b43m\x20\x1b\x5b30m\uf1d3\x20\x1b\x5b37m\x1b\x5b30mmain\x1b\x5b30m\x1b\x5b30m\x1b\x5b30m\x1b\x5b30m\x1b\x5b30m\x1b\x5b30m\x20\x2121\x1b\x5b30m\x20\x3f5\x20\x1b\x5b33\x3b49m\ue0b0\x1e\x1b\x5b92m\u276e
+SETUVAR _tide_right_items:status\x1ecmd_duration\x1econtext\x1ejobs\x1enode\x1epython\x1erustc\x1ejava\x1eruby\x1edistrobox\x1etoolbox
+SETUVAR fish_user_paths:/home/qn/\x2ecargo/bin\x1e/home/qn/\x2elocal/bin
 SETUVAR tide_aws_bg_color:yellow
 SETUVAR tide_aws_color:brblack
 SETUVAR tide_aws_icon:\uf270

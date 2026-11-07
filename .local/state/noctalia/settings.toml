@@ -3,11 +3,11 @@ config_version = 15
 [bar.default]
 center = [ "clock", "cat", "volume" ]
 end = [ "tray", "keyboard_layout", "network", "media", "notifications", "bluetooth", "control-center" ]
-start = [ "launcher", "workspaces", "workspace-add-main", "layout-main", "active_window" ]
+start = [ "launcher", "workspaces", "workspace-add-main", "active_window", "layout-main" ]
 
     [bar.default.monitor."Sceptre L24"]
     end = [ "tray", "keyboard_layout", "network", "notifications", "bluetooth", "control-center" ]
-    start = [ "launcher", "workspaces", "workspace-add-portrait", "layout-portrait", "active_window" ]
+    start = [ "launcher", "workspaces", "workspace-add-portrait", "active_window", "layout-portrait" ]
 
 [lockscreen_widgets]
 enabled = false
@@ -150,7 +150,7 @@ enabled = [
 builtin = "Dracula"
 mode = "dark"
 source = "wallpaper"
-wallpaper_scheme = "faithful"
+wallpaper_scheme = "dysfunctional"
 
     [theme.templates]
     builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "mango", "niri", "qt", "umbriel" ]
@@ -158,16 +158,16 @@ wallpaper_scheme = "faithful"
     enable_community_templates = true
 
 [wallpaper.default]
-path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
 
 [wallpaper.last]
-path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
 
 [wallpaper.monitors.DP-2]
-path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
 
 [wallpaper.monitors.DP-3]
-path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
 
 [[wallpaper.favorite]]
 palette_source = "wallpaper"

@@ -163,6 +163,12 @@ wallpaper_scheme = "dysfunctional"
         output_path = "$XDG_CONFIG_HOME/niri/noctalia-colors.kdl"
         post_hook = "niri msg action load-config-file || true"
 
+        [theme.templates.user.umbriel-accent]
+        hook_async = true
+        input_path = "templates/umbriel/colors.toml"
+        output_path = "$XDG_CONFIG_HOME/umbriel/noctalia.toml"
+        post_hook = "umbriel msg config-reload || true"
+
         [theme.templates.user.mango-accent]
         hook_async = true
         input_path = "templates/mango/colors.conf"

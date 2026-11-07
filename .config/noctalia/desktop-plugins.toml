@@ -40,6 +40,9 @@ type = "notification"
 type = "desktop/displays:shortcut"
 
 [[control_center.shortcuts]]
+type = "desktop/umbriel-layout:shortcut"
+
+[[control_center.shortcuts]]
 type = "noctalia/wallhaven:shortcut"
 
 [[control_center.shortcuts]]

@@ -1,12 +1,12 @@
 --!nonstrict
--- Dedicated Umbriel layout indicator for Main Monitor (DP-2).
+-- Dedicated Umbriel workspace layout indicator for Main Monitor (DP-2).
 
 local TARGET_OUTPUT = "DP-2"
 local helper = (noctalia.getenv("HOME") or "/home/qn") .. "/.local/bin/umbriel-layout"
 
 local LAYOUTS = {
-    scrolling = { glyph = "layout-columns", label = "Scroll", title = "Scrolling Strip" },
     dwindle   = { glyph = "layout-board-split", label = "Dwindle", title = "Dwindle Split" },
+    scrolling = { glyph = "layout-columns", label = "Scroll", title = "Scrolling Strip" },
     master    = { glyph = "layout-board", label = "Master", title = "Master + Stack" },
     stacking  = { glyph = "layout-cards", label = "Stack", title = "Stacking / Floating" },
 }
@@ -30,18 +30,18 @@ local function applyWorkspaces(workspaces)
         return
     end
 
-    local mode = tostring(target.layout or "scrolling")
-    local info = LAYOUTS[mode] or { glyph = "layout-columns", label = mode, title = mode }
+    local mode = tostring(target.layout or "dwindle")
+    local info = LAYOUTS[mode] or { glyph = "layout-board-split", label = mode, title = mode }
 
     barWidget.setVisible(true)
     barWidget.setGlyph(info.glyph)
     barWidget.setText(info.label)
-    barWidget.setColor("primary")
+    barWidget.setColor(target.layout_override and "secondary" or "primary")
     barWidget.setTooltip(
-        "Main Monitor (DP-2) Layout: " .. info.title
-        .. "\nLeft-click: Cycle layout (Scroll → Dwindle → Master → Stack)"
-        .. "\nRight-click: Reset to Scrolling"
-        .. "\nMiddle-click: Toggle Dwindle split"
+        "Workspace " .. tostring(target.name or target.index or "") .. " (DP-2): " .. info.title
+        .. "\nLeft-click: Cycle this workspace's layout (Dwindle → Scroll → Master → Stack)"
+        .. "\nRight-click: Reset this workspace to Dwindle"
+        .. "\nMiddle-click: Open Umbriel Control Panel"
     )
 end
 
@@ -77,9 +77,9 @@ function onClick()
 end
 
 function onRightClick()
-    noctalia.runAsync({"python3", helper, "scrolling", "--output", TARGET_OUTPUT})
+    noctalia.runAsync({"python3", helper, "dwindle", "--output", TARGET_OUTPUT})
 end
 
 function onMiddleClick()
-    noctalia.runAsync({"umbriel", "msg", "layout-toggle-split"})
+    noctalia.togglePanel("desktop/umbriel-layout:controls")
 end

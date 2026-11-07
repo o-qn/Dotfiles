@@ -1,4 +1,4 @@
 # Managed by ~/.local/bin/umbriel-toggle-vrr (Super+Shift+D)
 # Modes: "fullscreen" (Smart Auto), "always" (Force On), "disabled" (Off)
 [output.DP-2]
-vrr = "always"
+vrr = "disabled"

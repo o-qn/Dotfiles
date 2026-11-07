@@ -1,11 +1,11 @@
 id = "desktop/umbriel-layout"
-name = "Umbriel Layout"
+name = "Umbriel Controls"
 version = "1.0.0"
 plugin_api = 9
 author = "qn"
 license = "MIT"
-icon = "layout-columns"
-description = "Independent per-monitor workspace layout indicators and switchers for Umbriel."
+icon = "layout-board-split"
+description = "Per-workspace layout indicators and Control Center panel for Umbriel."
 dependencies = ["umbriel", "python3"]
 
 [[widget]]
@@ -15,3 +15,15 @@ entry = "main.luau"
 [[widget]]
 id = "portrait"
 entry = "portrait.luau"
+
+[[shortcut]]
+id = "shortcut"
+entry = "shortcut.luau"
+
+[[panel]]
+id = "controls"
+entry = "panel.luau"
+width = 500
+height = 510
+placement = "attached"
+position = "auto"
