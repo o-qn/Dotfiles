@@ -1,6 +1,6 @@
 # Desktop dotfiles
 
-Umrbriel (main window manager) · Noctalia 5 · Niri 26 · Hyprland 0.56 · Kitty · Fish · Nemo · Gwenview · Easy Effects · Zen · LazyVim.
+Umbriel (main window manager) · Noctalia 5 · Niri 26 · Hyprland 0.56 · Kitty · Fish · Nemo · Gwenview · Zen · LazyVim.
 Requires Python 3.11+, Node.js, and the desktop apps installed.
 
 ```bash
@@ -10,7 +10,7 @@ bash scripts/apply-theme.sh
 
 Desktop configs are symlinked to `~/.config/` and `~/.local/`.
 
-- **Compositor & Window Management**: **Niri** is the primary scrollable tiling compositor (`.config/niri/`), hooked with Noctalia desktop shell and color themes. Hyprland configuration (`.config/hypr/`) is maintained as a fallback session.
+- **Compositor & Window Management**: Compositors: **Umbriel** is the main session. Niri (.config/niri/) and Hyprland (.config/hypr/) are maintained as alternates
 - **Monitors & Displays**: Super+A → Displays controls either monitor; Super+Ctrl+M toggles the portrait display; disconnects fall back automatically and reconnects restore the last portrait workspace. Adjust `.config/niri/config.kdl` (or `.config/hypr/config/monitors.lua`) for your displays.
 - **Shell & Prompt**: Fish shell (`.config/fish/`) configured with Fisher, Tide prompt, Fastfetch, and Starship.
 - **Theming**: Restart Zen after changing Noctalia’s palette.
