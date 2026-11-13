@@ -9,13 +9,12 @@ end
 local function shell(keys, command, description, flags)
     cmd(keys, "noctalia msg " .. command, description, flags)
 end
-local scripts = '"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/desktop.sh" '
 
 -- Your original muscle memory.
 cmd("SUPER + Q", "kitty", "Open terminal")
 bind("SUPER + C", hl.dsp.window.close(), "Close focused window")
-cmd("SUPER + E", "bash " .. scripts .. "files", "Open Nemo")
-cmd("SUPER + B", "bash " .. scripts .. "browser", "Open Zen Browser")
+cmd("SUPER + E", "dolphin", "Open Dolphin")
+cmd("SUPER + B", "~/.local/bin/launch-browser", "Open Brave Origin")
 shell("SUPER + R", "panel-toggle launcher", "Application launcher")
 shell("SUPER + V", "panel-toggle clipboard", "Clipboard history")
 bind("SUPER + SHIFT + SPACE", hl.dsp.window.float({ action = "toggle" }), "Toggle floating")
@@ -41,10 +40,10 @@ shell("SUPER + CTRL + I", "caffeine-toggle", "Keep awake / restore idle")
 shell("ALT + TAB", "window-switcher", "Window switcher")
 shell("CTRL + ALT + F", "screenshot-fullscreen", "Screenshot focused monitor")
 shell("CTRL + ALT + A", "screenshot-annotate", "Freeze screen and annotate")
-cmd("SUPER + F1", "bash " .. scripts .. "help", "Search keyboard shortcuts")
-cmd("SUPER + CTRL + Q", "kitty --class desktop-doctor -e bash " .. scripts .. "doctor", "Desktop health check")
+cmd("SUPER + F1", "~/.local/bin/desktop-shortcuts hyprland", "Search keyboard shortcuts")
+cmd("SUPER + CTRL + Q", "kitty --class desktop-doctor --title 'Desktop Check' -e ~/.local/bin/desktop-doctor hyprland", "Desktop health check")
 cmd("SUPER + ESCAPE", "kitty -e btop", "System monitor")
-cmd("SUPER + SHIFT + R", "bash " .. scripts .. "reload", "Validate and reload configuration")
+cmd("SUPER + SHIFT + R", "~/.local/bin/desktop-reload hyprland", "Validate and reload configuration")
 
 for _, direction in ipairs({ "left", "right", "up", "down" }) do
     bind("SUPER + " .. direction, hl.dsp.focus({ direction = direction }), "Focus " .. direction)

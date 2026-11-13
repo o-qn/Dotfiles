@@ -115,8 +115,11 @@ local function sync_workspace_homes()
 	local homes = { found.main or monitors[1], found.portrait or found.main or monitors[1] }
 	local layout = homes[1].name .. ":" .. homes[2].name
 	-- X11/Proton games need an explicit primary display; reconnect order is unstable.
-	local primary = root .. "/scripts/displays.py"
-	hl.exec_cmd("python3 " .. "'" .. primary:gsub("'", "'\\''") .. "' primary")
+	local home = os.getenv("HOME")
+	local primary_cmd = home
+			and ("python3 '" .. (home .. "/.local/bin/desktop-displays"):gsub("'", "'\\''") .. "' primary")
+		or "desktop-displays primary"
+	hl.exec_cmd(primary_cmd)
 	local returning = false
 	for _, display in ipairs(displays) do
 		if found[display.role] and not display.ready and not display.restoring then

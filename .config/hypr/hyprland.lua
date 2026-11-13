@@ -19,6 +19,5 @@ function apply_noctalia_theme()
 end
 apply_noctalia_theme()
 
-
 -- For Noctalia Color templates
 require("noctalia").apply_theme()

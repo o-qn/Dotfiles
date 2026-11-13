@@ -5,7 +5,7 @@ hl.window_rule({
     no_blur = false,
 })
 hl.window_rule({
-    name = "nemo-glass", match = { class = "^([Nn]emo)$" },
+    name = "file-manager-glass", match = { class = "^(org[.]kde[.]dolphin|dolphin|[Nn]emo)$" },
     no_blur = false, opacity = "0.90 override 0.84 override 1.0 override",
 })
 hl.window_rule({ name = "suppress-maximize", match = { class = ".*" }, suppress_event = "maximize" })
@@ -18,7 +18,7 @@ hl.window_rule({ name = "desktop-tools", match = { class = "^(org.pulseaudio.pav
 hl.window_rule({ name = "desktop-reference", match = { class = "^(desktop-doctor)$" }, float = true, center = true, size = "1000 740" })
 hl.window_rule({ name = "scratchpad-style", match = { workspace = "special:magic" }, rounding = 16 })
 hl.window_rule({
-    name = "zen-no-glass", match = { class = "^(zen|Zen|zen-browser|zen-bin|app[.]zen_browser[.]zen)$" },
+    name = "browser-no-glass", match = { class = "^(brave-origin|com[.]brave[.]Origin|Brave-origin|brave-browser|zen|Zen|zen-browser|zen-bin|app[.]zen_browser[.]zen)$" },
     opaque = true, no_blur = true, force_rgbx = true,
 })
 hl.window_rule({
