@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+is_niri() {
+    [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] && niri msg version >/dev/null 2>&1
+}
+
+is_umbriel() {
+    command -v umbriel >/dev/null 2>&1 && umbriel outputs -j >/dev/null 2>&1
+}
+
+detect_compositor() {
+    if is_umbriel; then
+        printf 'umbriel\n'
+    elif is_niri; then
+        printf 'niri\n'
+    else
+        printf 'hyprland\n'
+    fi
+}
+
+check_app() {
+    local app="$1"
+    if command -v "$app" >/dev/null 2>&1; then
+        printf '  OK       %s\n' "$app"
+    else
+        printf '  MISSING  %s\n' "$app"
+    fi
+}
+
+target="${1:-$(detect_compositor)}"
+
+printf '\033[38;2;122;162;247mDESKTOP CHECK\033[0m\n\n'
+case "$target" in
+    umbriel)
+        for app in umbriel noctalia kitty dolphin qt6ct; do check_app "$app"; done
+        ;;
+    niri)
+        for app in niri noctalia kitty dolphin qt6ct; do check_app "$app"; done
+        ;;
+    hyprland|hypr)
+        for app in Hyprland hyprctl noctalia kitty dolphin qt6ct; do check_app "$app"; done
+        ;;
+    *)
+        printf 'Usage: desktop-doctor [umbriel|niri|hyprland]\n' >&2
+        exit 2
+        ;;
+esac
+
+if command -v brave-origin >/dev/null 2>&1 \
+    || command -v brave-origin-stable >/dev/null 2>&1 \
+    || command -v brave-browser >/dev/null 2>&1 \
+    || { command -v flatpak >/dev/null 2>&1 && flatpak info com.brave.Origin >/dev/null 2>&1; }; then
+    printf '  OK       brave-origin\n'
+else
+    printf '  MISSING  brave-origin\n'
+fi
+
+case "$target" in
+    umbriel)
+        printf '\nUmbriel configuration:\n'
+        umbriel config validate || true
+        ;;
+    niri)
+        printf '\nNiri configuration:\n'
+        niri validate || true
+        ;;
+    hyprland|hypr)
+        printf '\nHyprland configuration:\n'
+        hyprctl configerrors || true
+        ;;
+esac
+
+printf '\nNoctalia configuration:\n'
+noctalia config validate || true
+printf '\nShell status:\n'
+noctalia msg status || true
+
+printf '\nMonitors:\n'
+case "$target" in
+    umbriel) umbriel outputs || true ;;
+    niri)    niri msg outputs || true ;;
+    hyprland|hypr) hyprctl monitors || true ;;
+esac
+
+printf '\nPress Enter to close.'
+read -r _

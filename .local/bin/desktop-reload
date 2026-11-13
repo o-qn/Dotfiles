@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+is_niri() {
+    [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] && niri msg version >/dev/null 2>&1
+}
+
+is_umbriel() {
+    command -v umbriel >/dev/null 2>&1 && umbriel outputs -j >/dev/null 2>&1
+}
+
+detect_compositor() {
+    if is_umbriel; then
+        printf 'umbriel\n'
+    elif is_niri; then
+        printf 'niri\n'
+    else
+        printf 'hyprland\n'
+    fi
+}
+
+reload_desktop() {
+    local label="$1"
+    shift
+    local report
+
+    if ! report=$(noctalia config validate 2>&1) || [[ "$report" == *"WARN "* ]]; then
+        noctalia msg notification-show "Noctalia configuration needs attention" "$report"
+        exit 1
+    fi
+
+    "$@"
+    noctalia msg config-reload
+    noctalia msg notification-show "Desktop" "$label configuration reloaded."
+}
+
+target="${1:-$(detect_compositor)}"
+hypr_root="${HYPR_CONFIG_ROOT:-${XDG_CONFIG_HOME:-$HOME/.config}/hypr}"
+
+case "$target" in
+    umbriel)
+        if ! report=$(umbriel config validate 2>&1); then
+            noctalia msg notification-show "Umbriel configuration needs attention" "$report"
+            exit 1
+        fi
+        reload_desktop "Umbriel" umbriel msg config-reload
+        ;;
+    niri)
+        if ! report=$(niri validate 2>&1); then
+            noctalia msg notification-show "Niri configuration needs attention" "$report"
+            exit 1
+        fi
+        reload_desktop "Niri" niri msg action load-config-file
+        ;;
+    hyprland|hypr)
+        if ! report=$(Hyprland --verify-config -c "$hypr_root/hyprland.lua" 2>&1); then
+            noctalia msg notification-show "Hyprland configuration needs attention" "$report"
+            exit 1
+        fi
+        reload_desktop "Hyprland" hyprctl reload
+        ;;
+    *)
+        printf 'Usage: desktop-reload [umbriel|niri|hyprland]\n' >&2
+        exit 2
+        ;;
+esac

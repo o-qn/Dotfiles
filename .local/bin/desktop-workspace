@@ -7,8 +7,10 @@ import os
 from pathlib import Path
 import subprocess
 
+
 def query(command):
     return json.loads(subprocess.check_output(["hyprctl", command, "-j"], text=True))
+
 
 def is_niri():
     sock = os.environ.get("NIRI_SOCKET")
@@ -19,6 +21,7 @@ def is_niri():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     ).returncode == 0
+
 
 def create_workspace_niri(monitor=None):
     outputs = json.loads(subprocess.check_output(["niri", "msg", "-j", "outputs"], text=True))
@@ -35,12 +38,14 @@ def create_workspace_niri(monitor=None):
     # always focuses the bottommost (empty/new) workspace on that output.
     subprocess.run(["niri", "msg", "action", "focus-workspace", "99"], check=True)
 
+
 def is_umbriel():
     return subprocess.run(
         ["umbriel", "outputs", "-j"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     ).returncode == 0
+
 
 def create_workspace_umbriel(monitor=None):
     outputs = json.loads(subprocess.check_output(["umbriel", "outputs", "-j"], text=True))
@@ -66,6 +71,7 @@ def create_workspace_umbriel(monitor=None):
     subprocess.run(cmd, check=True)
     return number
 
+
 def create_workspace(monitor=None):
     if is_umbriel():
         return create_workspace_umbriel(monitor)
@@ -78,7 +84,7 @@ def create_workspace(monitor=None):
         target = next((m for m in monitors if m["name"] == monitor or (monitor and monitor in m.get("description", ""))), None) if monitor else None
         target = target or next((m for m in monitors if m["focused"]), None) or next(iter(monitors), None)
         if target is None:
-            raise RuntimeError(f"No active monitor available")
+            raise RuntimeError("No active monitor available")
         used = {w["id"] for w in query("workspaces") if w["id"] > 0}
         number = 3
         while number in used:
@@ -89,6 +95,7 @@ def create_workspace(monitor=None):
         )
         subprocess.run(["hyprctl", "eval", lua], check=True)
         return number
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)

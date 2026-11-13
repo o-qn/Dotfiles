@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MONITOR="DP-2" # Verify this matches your target monitor name
+
+# Isolate the section for this monitor and check if VRR is currently enabled
+IS_ENABLED=$(niri msg outputs | awk -v m="$MONITOR" '
+    $0 ~ m { found=1 }
+    found && /^Output/ && !($0 ~ m) { found=0 }
+    found && /Variable refresh rate:.*enabled/ { print "yes" }
+')
+
+if [ "$IS_ENABLED" = "yes" ]; then
+    niri msg output "$MONITOR" vrr off
+    label="Disabled (Desktop Mode)"
+else
+    niri msg output "$MONITOR" vrr on
+    label="Enabled (Gaming Mode)"
+fi
+
+if command -v noctalia >/dev/null 2>&1; then
+    noctalia msg notification-show "VRR ($MONITOR)" "$label" >/dev/null 2>&1 || true
+elif command -v notify-send >/dev/null 2>&1; then
+    notify-send -u low -t 1800 "VRR ($MONITOR)" "$label"
+fi

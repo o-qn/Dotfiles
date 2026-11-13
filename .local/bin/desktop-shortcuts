@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Search the live descriptions. No extra launcher or stale shortcut list."""
+"""Search live keybind descriptions across Umbriel, Niri, and Hyprland."""
+import argparse
 import json
 import os
 import pathlib
@@ -58,10 +59,13 @@ UMBRIEL_ACTION_DESCRIPTIONS = {
     "spawn noctalia msg brightness-down": "Brightness down",
     "spawn kitty": "Open terminal",
     "spawn kitty -e btop": "System monitor",
-    "spawn ~/.config/hypr/scripts/desktop.sh files": "Open Nemo",
-    "spawn ~/.config/hypr/scripts/desktop.sh browser": "Open Zen Browser",
-    "spawn ~/.config/hypr/scripts/desktop.sh help": "Search keyboard shortcuts",
-    "spawn ~/.config/hypr/scripts/desktop.sh reload": "Validate and reload configuration",
+    "spawn dolphin": "Open Dolphin",
+    "spawn nemo": "Open Nemo",
+    "spawn ~/.local/bin/launch-browser": "Open Brave Origin",
+    "spawn ~/.local/bin/desktop-shortcuts": "Search keyboard shortcuts",
+    "spawn ~/.local/bin/desktop-shortcuts umbriel": "Search keyboard shortcuts",
+    "spawn ~/.local/bin/desktop-reload": "Validate and reload configuration",
+    "spawn ~/.local/bin/desktop-reload umbriel": "Validate and reload configuration",
     "spawn ~/.local/bin/umbriel-toggle-vrr": "Cycle Variable Refresh Rate (VRR) mode",
     "config-reload": "Reload Umbriel configuration",
     "output-toggle DP-3": "Toggle portrait monitor (DP-3)",
@@ -168,6 +172,12 @@ NIRI_ACTION_DESCRIPTIONS = {
     'spawn "noctalia" "msg" "brightness-down"': "Brightness down",
     'spawn "kitty"': "Open terminal",
     'spawn "kitty" "-e" "btop"': "System monitor",
+    'spawn "dolphin"': "Open Dolphin",
+    'spawn "nemo"': "Open Nemo",
+    'spawn "brave-origin"': "Open Brave Origin",
+    'spawn "brave-origin-stable"': "Open Brave Origin",
+    'spawn "zen"': "Open Zen Browser",
+    'spawn "zen-browser"': "Open Zen Browser",
     'switch-layout "next"': "Switch English / Arabic",
     "close-window": "Close focused window",
     "toggle-window-floating": "Toggle floating",
@@ -208,10 +218,13 @@ NIRI_ACTION_DESCRIPTIONS = {
     "focus-monitor-right": "Focus monitor right",
     "focus-monitor-up": "Focus monitor up",
     "focus-monitor-down": "Focus monitor down",
+    "focus-monitor-next": "Focus next monitor",
     "move-column-to-monitor-left": "Move column to monitor left",
     "move-column-to-monitor-right": "Move column to monitor right",
     "move-column-to-monitor-up": "Move column to monitor up",
     "move-column-to-monitor-down": "Move column to monitor down",
+    "move-column-to-monitor-next": "Move column to next monitor",
+    "move-window-to-monitor-next": "Move window to next monitor",
     "focus-workspace-down": "Next workspace on this monitor",
     "focus-workspace-up": "Previous workspace on this monitor",
     "move-column-to-workspace-down": "Move column to next workspace",
@@ -225,13 +238,7 @@ NIRI_ACTION_DESCRIPTIONS = {
 
 def format_niri_key(combo: str) -> str:
     parts = combo.split("+")
-    formatted = []
-    for part in parts:
-        if part == "Mod":
-            formatted.append("Super")
-        else:
-            formatted.append(part)
-    return " + ".join(formatted)
+    return " + ".join("Super" if part == "Mod" else part for part in parts)
 
 
 def describe_niri_action(action: str, title_override: str | None) -> str:
@@ -239,21 +246,16 @@ def describe_niri_action(action: str, title_override: str | None) -> str:
         return title_override
     if action in NIRI_ACTION_DESCRIPTIONS:
         return NIRI_ACTION_DESCRIPTIONS[action]
-    if "desktop.sh" in action:
-        if "files" in action:
-            return "Open Nemo"
-        if "browser" in action:
-            return "Open Zen Browser"
-        if "help" in action:
-            return "Search keyboard shortcuts"
-        if "doctor" in action:
-            return "Desktop health check"
-        if "reload" in action:
-            return "Validate and reload configuration"
+    if "launch-browser" in action:
+        return "Open Brave Origin"
+    if "desktop-shortcuts" in action:
+        return "Search keyboard shortcuts"
+    if "desktop-doctor" in action:
+        return "Desktop health check"
+    if "desktop-reload" in action or "load-config-file" in action:
+        return "Validate and reload configuration"
     if "niri-toggle-vrr" in action:
         return "Toggle Variable Refresh Rate (VRR)"
-    if "load-config-file" in action:
-        return "Validate and reload configuration"
     if "DP-3" in action:
         return "Toggle portrait monitor"
     m = re.match(r"^focus-workspace (\d+)$", action)
@@ -294,8 +296,14 @@ def get_niri_rows() -> list[str]:
 def describe_umbriel_action(action: str) -> str:
     if action in UMBRIEL_ACTION_DESCRIPTIONS:
         return UMBRIEL_ACTION_DESCRIPTIONS[action]
-    if "desktop.sh doctor" in action:
+    if "launch-browser" in action:
+        return "Open Brave Origin"
+    if "desktop-shortcuts" in action:
+        return "Search keyboard shortcuts"
+    if "desktop-doctor" in action:
         return "Desktop health check"
+    if "desktop-reload" in action:
+        return "Validate and reload configuration"
     m = re.match(r"^workspace-switch (\d+)$", action)
     if m:
         return f"Focus workspace {m.group(1)}"
@@ -329,22 +337,46 @@ def get_umbriel_rows() -> list[str]:
     return rows
 
 
-try:
+def get_hyprland_rows() -> list[str]:
+    result = subprocess.run(["hyprctl", "binds", "-j"], check=True, capture_output=True, text=True)
+    rows = []
+    for bind in json.loads(result.stdout):
+        description = bind.get("description", "")
+        if not description:
+            continue
+        parts = [name for mask, name in mods if bind.get("modmask", 0) & mask]
+        parts.append(bind.get("key", "") or f'code:{bind.get("keycode", "?")}')
+        rows.append(f'{" + ".join(parts):<32}  {description}')
+    return rows
+
+
+def detect_compositor() -> str:
     if is_umbriel():
-        rows = get_umbriel_rows()
-    elif is_niri():
-        rows = get_niri_rows()
-    else:
-        result = subprocess.run(["hyprctl", "binds", "-j"], check=True, capture_output=True, text=True)
-        rows = []
-        for bind in json.loads(result.stdout):
-            description = bind.get("description", "")
-            if not description:
-                continue
-            parts = [name for mask, name in mods if bind.get("modmask", 0) & mask]
-            parts.append(bind.get("key", "") or f'code:{bind.get("keycode", "?")}')
-            rows.append(f'{" + ".join(parts):<32}  {description}')
-    subprocess.run(["noctalia", "dmenu", "--prompt", "Keyboard shortcuts"], input="\n".join(rows), text=True, check=True)
-except (subprocess.CalledProcessError, json.JSONDecodeError, OSError) as error:
-    print(f"Cannot read keyboard shortcuts: {error}", file=sys.stderr)
-    sys.exit(1)
+        return "umbriel"
+    if is_niri():
+        return "niri"
+    return "hyprland"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("compositor", nargs="?", choices=("umbriel", "niri", "hyprland"))
+    args = parser.parse_args()
+    target = args.compositor or detect_compositor()
+
+    try:
+        if target == "umbriel":
+            rows = get_umbriel_rows()
+        elif target == "niri":
+            rows = get_niri_rows()
+        else:
+            rows = get_hyprland_rows()
+        subprocess.run(["noctalia", "dmenu", "--prompt", "Keyboard shortcuts"], input="\n".join(rows), text=True, check=True)
+    except (subprocess.CalledProcessError, json.JSONDecodeError, OSError) as error:
+        print(f"Cannot read keyboard shortcuts: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
