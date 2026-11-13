@@ -1,5 +1,20 @@
-[UiSettings]
-ColorScheme=noctalia
-
 [FullScreen]
 FullScreenColorScheme=/home/qn/.local/share/color-schemes/noctalia.colors
+
+[General]
+LastUsedVersion=210800
+
+[MainWindow]
+MenuBar=Disabled
+
+[Recent Files]
+File1[$e]=$HOME/Pictures/wallpaper/tree.jpg
+File2[$e]=$HOME/Pictures/wallpaper/treee.jpg
+Name1[$e]=tree.jpg
+Name2[$e]=treee.jpg
+
+[SideBar]
+InformationSplitterSizes=0,0
+
+[UiSettings]
+ColorScheme=noctalia

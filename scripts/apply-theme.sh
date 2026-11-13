@@ -1,19 +1,39 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Run explicitly inside your Hyprland session after installing the dotfiles.
+# Run explicitly inside your Umbriel, Niri, or Hyprland session after installing the dotfiles.
 noctalia msg config-reload
 noctalia msg templates-apply
-xdg-mime default nemo.desktop inode/directory
+xdg-mime default org.kde.dolphin.desktop inode/directory
 if command -v kwriteconfig6 >/dev/null; then
+    if command -v dolphin >/dev/null; then
+        kwriteconfig6 --file dolphinrc --group UiSettings --key ColorScheme noctalia
+    fi
     if command -v easyeffects >/dev/null; then
         kwriteconfig6 --file easyeffectsrc --group UiSettings --key ColorScheme noctalia
     fi
+    kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
+    kwriteconfig6 --file kdeglobals --group Icons --key Theme Papirus-Dark
     kwriteconfig6 --file kdeglobals --group General --key TerminalApplication kitty
     kwriteconfig6 --file kdeglobals --group General --key TerminalService kitty.desktop
     if command -v gwenview >/dev/null; then
         kwriteconfig6 --file gwenviewrc --group UiSettings --key ColorScheme noctalia
         kwriteconfig6 --file gwenviewrc --group FullScreen --key FullScreenColorScheme "${XDG_DATA_HOME:-$HOME/.local/share}/color-schemes/noctalia.colors"
     fi
+fi
+qt6ct_conf="${XDG_CONFIG_HOME:-$HOME/.config}/qt6ct/qt6ct.conf"
+if [[ -f "$qt6ct_conf" ]] && command -v python3 >/dev/null; then
+    python3 -c '
+import configparser, pathlib, sys
+path = pathlib.Path(sys.argv[1])
+cfg = configparser.RawConfigParser()
+cfg.optionxform = str
+cfg.read(path)
+if not cfg.has_section("Appearance"):
+    cfg.add_section("Appearance")
+cfg.set("Appearance", "color_scheme_path", sys.argv[2])
+with path.open("w") as f:
+    cfg.write(f, space_around_delimiters=False)
+' "$qt6ct_conf" "${XDG_CONFIG_HOME:-$HOME/.config}/qt6ct/colors/noctalia.conf"
 fi
 # KDE image viewer uses the same generated palette in normal and fullscreen UI.
 if command -v gwenview >/dev/null; then
