@@ -7,25 +7,7 @@ hotkey-overlay {
 }
 animations {
     workspace-switch {
- curve "cubic-bezier" 0.25 0.1 0.25 1.0 ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        curve "cubic-bezier" 0.25 0.1 0.25 1.0 ;
         duration-ms 150
     }
 }
@@ -126,6 +108,7 @@ layout {
 
 // Noctalia owns the desktop bar, notifications, wallpaper, clipboard, polkit agent, OSD, and idle
 spawn-at-startup "noctalia" "--daemon"
+spawn-at-startup "easyeffects" "--service-mode" "--hide-window"
 
 // Named workspace acting as Niri's scratchpad (Mod+S / Mod+Shift+S)
 workspace "scratchpad"
@@ -159,9 +142,9 @@ window-rule {
     clip-to-geometry true
 }
 
-// Nemo glass & opacity (matching Hyprland's nemo-glass: 0.90 active, 0.84 inactive, blurred)
+// Dolphin & Nemo glass & opacity (0.90 active, 0.84 inactive, blurred)
 window-rule {
-    match app-id=r"^([Nn]emo)$"
+    match app-id=r"^(org\.kde\.dolphin|dolphin|[Nn]emo)$"
     opacity 0.9
     draw-border-with-background false
     background-effect {
@@ -177,7 +160,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r"^([Nn]emo)$" is-active=false
+    match app-id=r"^(org\.kde\.dolphin|dolphin|[Nn]emo)$" is-active=false
     opacity 0.84
 }
 
@@ -193,7 +176,7 @@ window-rule {
 
 // Dialogs and system tools should open floating (matching Hyprland's 900x650 size)
 window-rule {
-    match app-id=r"^(org\.pulseaudio\.pavucontrol|blueman-manager|nm-connection-editor|qt6ct|kvantummanager)$"
+    match app-id=r"^(org\.pulseaudio\.pavucontrol|pavucontrol|blueman-manager|nm-connection-editor|qt6ct|kvantummanager)$"
     open-floating true
     default-column-width { fixed 900; }
     default-window-height { fixed 650; }
@@ -206,22 +189,29 @@ window-rule {
     default-window-height { fixed 740; }
 }
 
+window-rule {
+    match app-id=r"^Noctalia$"
+    open-floating true
+    default-column-width { fixed 1020; }
+    default-window-height { fixed 900; }
+}
+
 // Browser Picture-in-Picture
 window-rule {
-    match app-id=r"(zen|firefox)" title="^Picture-in-Picture$"
+    match app-id=r"(brave-origin|brave-browser|zen|firefox)" title=r"^[Pp]icture[- ][Ii]n[- ][Pp]icture$"
     open-floating true
 }
 
-// Steam games open on the main gaming output with VRR
+// Games & Steam open on the main gaming output with VRR
 window-rule {
-    match app-id=r"^steam_app_\d+$"
+    match app-id=r"^(steam_app_.*|gamescope|cs2|dota2)$"
     open-on-output "DP-2"
     variable-refresh-rate true
 }
 
-// Open zen maximized
+// Open browsers maximized
 window-rule {
-    match app-id="zen"
+    match app-id=r"^(brave-origin|com\.brave\.Origin|brave-browser|[Zz]en(-browser|-alpha|-beta|-twilight)?|app\.zen_browser\.zen)$"
     open-maximized true
 }
 
@@ -229,15 +219,6 @@ window-rule {
 // Keybindings
 // -----------------------------------------------------------------------------
 binds {
-    
-
-    // Perspective adjustment for Hyprland's Mod+S / Mod+Shift+S (scratchpad)
-    
-    
-    
-
-    // Navigation (Focus - crosses monitors at edges like Hyprland)
-    
     // Noctalia Desktop Shell Hooks
     Mod+R       { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
     Mod+D repeat=false { toggle-overview; }
@@ -274,10 +255,10 @@ binds {
     // Applications (matching Hyprland keybinds.lua)
     Mod+Q        { spawn "kitty"; }
     Mod+Return   { spawn "kitty"; }
-    Mod+E        { spawn "nemo"; }
-    Mod+B        { spawn "zen"; }
+    Mod+E        { spawn "dolphin"; }
+    Mod+B        { spawn-sh "~/.local/bin/launch-browser"; }
     Mod+Escape   { spawn "kitty" "-e" "btop"; }
-    Mod+Ctrl+Q   { spawn-sh "kitty --class desktop-doctor -e bash \"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/desktop.sh\" doctor"; }
+    Mod+Ctrl+Q   { spawn-sh "kitty --class desktop-doctor --title 'Desktop Check' -e ~/.local/bin/desktop-doctor niri"; }
 
     // Layout Switching (English / Arabic)
     Mod+Space    { switch-layout "next"; }
@@ -297,6 +278,7 @@ binds {
     // Perspective adjustment for Hyprland's Mod+J (togglesplit) -> stack/unstack into column or tabbed column
     Mod+J                  { consume-or-expel-window-left; }
     Mod+Shift+J            { toggle-column-tabbed-display; }
+    Mod+S                  { focus-workspace "scratchpad"; }
     Mod+Shift+S            { move-window-to-workspace "scratchpad" focus=false; }
 
     Mod+BracketLeft        { consume-or-expel-window-left; }
@@ -386,19 +368,18 @@ binds {
     Mod+Ctrl+WheelScrollLeft             { move-column-left; }
 
     // Help, Reload, Monitor Toggle & Session
-    Mod+F1                 { spawn-sh "\"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/desktop.sh\" help"; }
+    Mod+F1                 { spawn-sh "~/.local/bin/desktop-shortcuts niri"; }
     Mod+Shift+Slash        { show-hotkey-overlay; }
-    Mod+Shift+R            { spawn-sh "niri msg action load-config-file && noctalia msg config-reload && noctalia msg notification-show 'Desktop' 'Niri configuration reloaded.'"; }
+    Mod+Shift+R            { spawn-sh "~/.local/bin/desktop-reload niri"; }
     Mod+Ctrl+M             { spawn-sh "if niri msg -j outputs | grep -A20 '\"DP-3\"' | grep -q '\"current_mode\": null'; then niri msg output DP-3 on; else niri msg output DP-3 off; fi"; }
     Mod+Shift+E            { quit; }
-    Mod+Shift+d { spawn "/home/qn/.local/bin/niri-toggle-vrr"; }
-    Mod+Grave          { focus-monitor-next; }
-    Mod+Shift+Grave    { move-column-to-monitor-next; }
-    Mod+Ctrl+Grave     { move-window-to-monitor-next; }
-    Mod+a { focus-column-left; }
-    Mod+s { focus-column-right; }
-    Mod+left { focus-column-left; }
-    Mod+right { focus-column-right; }
+    Mod+Shift+D            { spawn-sh "~/.local/bin/niri-toggle-vrr"; }
+    Mod+Grave              { focus-monitor-next; }
+    Mod+Shift+Grave        { move-column-to-monitor-next; }
+    Mod+Ctrl+Grave         { move-window-to-monitor-next; }
+    Mod+A                  { focus-column-left; }
+    Mod+Left               { focus-column-left; }
+    Mod+Right              { focus-column-right; }
 }
 
 include "noctalia.kdl"
