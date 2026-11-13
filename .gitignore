@@ -50,6 +50,11 @@ secrets.*
 /.config/nvim/.lazy/
 /.config/nvim/lazyvim.json.bak
 
+# Runtime compositor/theme state
+/.config/umbriel/*-override.toml
+/.config/niri/noctalia-colors.kdl
+/.config/qt6ct/colors/Cosmic*.conf
+
 # Keep the video folder; large local wallpaper clips stay machine-local.
 /.local/share/wallpapers/videos/*
 !/.local/share/wallpapers/videos/.gitkeep

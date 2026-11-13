@@ -10,16 +10,31 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parent
-CONFIG_DIRS = ('hypr', 'umbriel', 'kitty', 'noctalia', 'btop', 'qt6ct', 'nvim')
+CONFIG_DIRS = (
+    'umbriel',
+    'niri',
+    'hypr',
+    'noctalia',
+    'kitty',
+    'alacritty',
+    'fish',
+    'fastfetch',
+    'nemo',
+    'btop',
+    'qt6ct',
+    'nvim',
+)
 
 
 def targets(home):
+    bin_dir = ROOT / '.local/bin'
+    nemo_actions_dir = ROOT / '.local/share/nemo/actions'
     return [home / '.config' / name for name in CONFIG_DIRS] + [
+        home / '.config/dolphinrc',
         home / '.config/gwenviewrc',
         home / '.config/easyeffectsrc',
-        home / '.local/bin/umbriel-toggle-vrr',
-        home / '.local/bin/umbriel-layout',
-        home / '.local/bin/umbriel-effects',
+        *[home / '.local/bin' / p.name for p in sorted(bin_dir.iterdir()) if p.is_file()],
+        *[home / '.local/share/nemo/actions' / p.name for p in sorted(nemo_actions_dir.iterdir()) if p.is_file()],
         home / '.local/share/noctalia/plugins/displays',
         home / '.local/share/noctalia/plugins/umbriel-layout',
         home / '.local/state/noctalia/settings.toml',
@@ -43,11 +58,19 @@ def deploy(home):
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.is_symlink():
             target.unlink()
-        if source.name in {'gwenviewrc', 'easyeffectsrc'} or source.suffix in {'.toml', '.conf', '.lua', '.py', '.sh'}:
+        if source.name in {'dolphinrc', 'gwenviewrc', 'easyeffectsrc'} or source.suffix in {'.toml', '.conf', '.lua', '.py', '.sh'}:
             target.write_text(expand(source.read_text(), home))
             shutil.copymode(source, target)
         else:
             shutil.copy2(source, target)
+
+
+def symlink(home):
+    for target in targets(home):
+        source = ROOT / target.relative_to(home)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        remove(target)
+        target.symlink_to(source)
 
 
 def remove(path):
@@ -97,16 +120,20 @@ def restore(folder):
 
 
 def validate():
-    for command in ('Hyprland', 'noctalia'):
-        if not shutil.which(command):
-            raise SystemExit(f'Missing {command}; install desktop dependencies first.')
+    if not shutil.which('noctalia'):
+        raise SystemExit('Missing noctalia; install desktop dependencies first.')
+    if not any(shutil.which(command) for command in ('umbriel', 'niri', 'Hyprland')):
+        raise SystemExit('Missing umbriel (or niri / Hyprland); install desktop dependencies first.')
     with tempfile.TemporaryDirectory(prefix='desktop-dotfiles-check-') as directory:
         home = Path(directory)
         deploy(home)
-        env = dict(os.environ, HYPR_CONFIG_ROOT=str(home / '.config/hypr'))
-        subprocess.run(['Hyprland', '--verify-config', '-c', str(home / '.config/hypr/hyprland.lua')], env=env, check=True)
         if shutil.which('umbriel'):
             subprocess.run(['umbriel', 'config', 'validate', '-c', str(home / '.config/umbriel/config.toml')], check=True)
+        if shutil.which('niri'):
+            subprocess.run(['niri', 'validate', '-c', str(home / '.config/niri/config.kdl')], check=True)
+        if shutil.which('Hyprland'):
+            env = dict(os.environ, HYPR_CONFIG_ROOT=str(home / '.config/hypr'))
+            subprocess.run(['Hyprland', '--verify-config', '-c', str(home / '.config/hypr/hyprland.lua')], env=env, check=True)
         result = subprocess.run(['noctalia', 'config', 'validate', str(home / '.config/noctalia/config.toml')], capture_output=True, text=True, check=True)
         print(result.stdout, end='')
         if 'WARN ' in result.stdout + result.stderr:
@@ -120,6 +147,7 @@ def main():
     group.add_argument('--check', action='store_true', help='Validate in a temporary directory')
     group.add_argument('--dry-run', action='store_true', help='List targets without changing anything')
     group.add_argument('--restore', type=Path, metavar='BACKUP', help='Restore a previous backup')
+    parser.add_argument('--symlink', action='store_true', help='Symlink tracked targets to this repo instead of copying')
     parser.add_argument('--target-home', type=Path, default=Path.home(), help='Installation home (default: current user)')
     args = parser.parse_args()
     home = args.target_home.expanduser().resolve()
@@ -130,7 +158,8 @@ def main():
         validate()
         return
     if args.dry_run:
-        print('Would back up and copy:')
+        action = 'symlink' if args.symlink else 'copy'
+        print(f'Would back up and {action}:')
         for target in targets(home):
             print(f'  {target}')
         print('GUI preferences are in the base config; existing Noctalia overrides are backed up and reset.')
@@ -143,16 +172,20 @@ def main():
     validate()
     saved = backup(home)
     try:
-        # Replace directory symlinks only after backing up the link itself.
-        for target in targets(home):
-            if target.is_symlink():
-                target.unlink()
-        deploy(home)
+        if args.symlink:
+            symlink(home)
+        else:
+            # Replace directory symlinks only after backing up the link itself.
+            for target in targets(home):
+                if target.is_symlink():
+                    target.unlink()
+            deploy(home)
     except Exception:
         restore(saved)
         raise
-    print(f'Installed configuration for {home}. Backup: {saved}')
-    print('No services were restarted. Log in to Hyprland, then run scripts/apply-theme.sh.')
+    verb = 'Symlinked' if args.symlink else 'Installed'
+    print(f'{verb} configuration for {home}. Backup: {saved}')
+    print('No services were restarted. Log in to Umbriel (or Niri / Hyprland), then run scripts/apply-theme.sh.')
     print(f'Rollback: python3 install.py --restore {saved}')
 
 
