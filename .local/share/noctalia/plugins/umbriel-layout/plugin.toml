@@ -23,7 +23,7 @@ entry = "shortcut.luau"
 [[panel]]
 id = "controls"
 entry = "panel.luau"
-width = 500
-height = 510
+width = 560
+height = 680
 placement = "attached"
 position = "auto"

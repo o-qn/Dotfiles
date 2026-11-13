@@ -9,6 +9,13 @@ start = [ "launcher", "workspaces", "workspace-add-main", "active_window", "layo
     end = [ "tray", "keyboard_layout", "network", "notifications", "bluetooth", "control-center" ]
     start = [ "launcher", "workspaces", "workspace-add-portrait", "active_window", "layout-portrait" ]
 
+[dock]
+cross_axis_padding = 0
+icon_size = 38
+item_spacing = 0
+launcher_position = "end"
+show_dots = true
+
 [lockscreen_widgets]
 enabled = false
 schema_version = 2
@@ -147,10 +154,11 @@ enabled = [
 ]
 
 [theme]
-builtin = "Dracula"
+builtin = "Nord"
+community_palette = "Inabakumori"
 mode = "dark"
 source = "wallpaper"
-wallpaper_scheme = "dysfunctional"
+wallpaper_scheme = "faithful"
 
     [theme.templates]
     builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "mango", "niri", "qt", "umbriel" ]
@@ -158,26 +166,20 @@ wallpaper_scheme = "dysfunctional"
     enable_community_templates = true
 
 [wallpaper.default]
-path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
 
 [wallpaper.last]
-path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
 
 [wallpaper.monitors.DP-2]
-path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
 
 [wallpaper.monitors.DP-3]
-path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
 
 [[wallpaper.favorite]]
 palette_source = "wallpaper"
 path = "/home/qn/.local/share/wallpapers/abstract-swirls.jpg"
-theme_mode = "dark"
-wallpaper_scheme = "m3-content"
-
-[[wallpaper.favorite]]
-palette_source = "wallpaper"
-path = "/home/qn/.local/share/wallpapers/tree.jpg"
 theme_mode = "dark"
 wallpaper_scheme = "m3-content"
 
@@ -191,10 +193,16 @@ wallpaper_scheme = "faithful"
 palette_source = "wallpaper"
 path = "/home/qn/.local/share/wallpapers/wallhaven-1qo5rg.png"
 theme_mode = "dark"
-wallpaper_scheme = "dysfunctional"
+wallpaper_scheme = "vibrant"
 
 [[wallpaper.favorite]]
 palette_source = "wallpaper"
 path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
 theme_mode = "dark"
 wallpaper_scheme = "faithful"
+
+[[wallpaper.favorite]]
+palette_source = "wallpaper"
+path = "/home/qn/.local/share/wallpapers/tree.jpg"
+theme_mode = "dark"
+wallpaper_scheme = "vibrant"

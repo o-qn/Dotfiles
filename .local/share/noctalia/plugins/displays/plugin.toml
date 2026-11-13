@@ -2,11 +2,11 @@ id = "desktop/displays"
 name = "Displays"
 version = "1.0.0"
 plugin_api = 9
-author = "@USER@"
+author = "qn"
 license = "MIT"
 icon = "device-desktop"
 description = "Enable and disable desktop displays with workspace restoration."
-dependencies = ["hyprctl", "python3"]
+dependencies = ["python3"]
 [[shortcut]]
 id = "shortcut"
 entry = "shortcut.luau"

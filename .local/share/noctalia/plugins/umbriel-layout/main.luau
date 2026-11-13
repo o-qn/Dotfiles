@@ -2,7 +2,13 @@
 -- Dedicated Umbriel workspace layout indicator for Main Monitor (DP-2).
 
 local TARGET_OUTPUT = "DP-2"
-local helper = (noctalia.getenv("HOME") or "/home/qn") .. "/.local/bin/umbriel-layout"
+local home = noctalia.getenv("HOME")
+local function helperCmd(...)
+    if home and home ~= "" then
+        return {"python3", home .. "/.local/bin/umbriel-layout", ...}
+    end
+    return {"umbriel-layout", ...}
+end
 
 local LAYOUTS = {
     dwindle   = { glyph = "layout-board-split", label = "Dwindle", title = "Dwindle Split" },
@@ -73,11 +79,11 @@ if noctalia.commandExists("umbriel") then
 end
 
 function onClick()
-    noctalia.runAsync({"python3", helper, "toggle", "--output", TARGET_OUTPUT})
+    noctalia.runAsync(helperCmd("toggle", "--output", TARGET_OUTPUT))
 end
 
 function onRightClick()
-    noctalia.runAsync({"python3", helper, "dwindle", "--output", TARGET_OUTPUT})
+    noctalia.runAsync(helperCmd("dwindle", "--output", TARGET_OUTPUT))
 end
 
 function onMiddleClick()

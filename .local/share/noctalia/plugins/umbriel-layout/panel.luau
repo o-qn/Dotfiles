@@ -2,8 +2,13 @@
 -- Umbriel Control Center panel inside Noctalia.
 -- Shows clear explanations for each setting and highlights the currently active mode.
 
-local home = noctalia.getenv("HOME") or "/home/qn"
-local helper = home .. "/.local/bin/umbriel-effects"
+local home = noctalia.getenv("HOME")
+local function helperCmd(...)
+    if home and home ~= "" then
+        return {"python3", home .. "/.local/bin/umbriel-effects", ...}
+    end
+    return {"umbriel-effects", ...}
+end
 
 local state = {
     workspace = "1",
@@ -63,7 +68,7 @@ end
 
 local function refresh()
     if not opened or busy then return end
-    noctalia.runAsync({"python3", helper, "status"}, function(res)
+    noctalia.runAsync(helperCmd("status"), function(res)
         if not opened then return end
         accept(res)
         render()
@@ -82,7 +87,7 @@ local function runAction(category, mode)
     end
     busy = true
     render()
-    noctalia.runAsync({"python3", helper, category, mode}, function(res)
+    noctalia.runAsync(helperCmd(category, mode), function(res)
         busy = false
         if not opened then return end
         accept(res)
@@ -95,7 +100,19 @@ render = function()
         ui.row({ align = "center", gap = 8 }, {
             ui.label({ text = "Umbriel Control Center", fontSize = 18, fontWeight = "bold", flexGrow = 1 }),
             ui.button({
-                text = "Shortcuts",
+                text = "Search",
+                variant = "ghost",
+                onClick = function()
+                    panel.close()
+                    if home and home ~= "" then
+                        noctalia.runAsync({home .. "/.local/bin/desktop-shortcuts", "umbriel"})
+                    else
+                        noctalia.runAsync({"desktop-shortcuts", "umbriel"})
+                    end
+                end,
+            }),
+            ui.button({
+                text = "Cheatsheet",
                 variant = "ghost",
                 onClick = function()
                     panel.close()
@@ -129,28 +146,28 @@ render = function()
                 ui.button({
                     text = "Dwindle",
                     glyph = "layout-board-split",
-                    variant = state.layout == "dwindle" and "solid" or "outline",
+                    variant = state.layout == "dwindle" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("layout", "dwindle") end,
                 }),
                 ui.button({
                     text = "Scroll",
                     glyph = "layout-columns",
-                    variant = state.layout == "scrolling" and "solid" or "outline",
+                    variant = state.layout == "scrolling" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("layout", "scrolling") end,
                 }),
                 ui.button({
                     text = "Master",
                     glyph = "layout-board",
-                    variant = state.layout == "master" and "solid" or "outline",
+                    variant = state.layout == "master" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("layout", "master") end,
                 }),
                 ui.button({
                     text = "Stack",
                     glyph = "layout-cards",
-                    variant = state.layout == "stacking" and "solid" or "outline",
+                    variant = state.layout == "stacking" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("layout", "stacking") end,
                 }),
@@ -176,19 +193,19 @@ render = function()
             ui.row({ gap = 6 }, {
                 ui.button({
                     text = "Smart Auto",
-                    variant = state.vrr_mode == "fullscreen" and "solid" or "outline",
+                    variant = state.vrr_mode == "fullscreen" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("vrr", "fullscreen") end,
                 }),
                 ui.button({
                     text = "Always On",
-                    variant = state.vrr_mode == "always" and "solid" or "outline",
+                    variant = state.vrr_mode == "always" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("vrr", "always") end,
                 }),
                 ui.button({
                     text = "Disabled",
-                    variant = state.vrr_mode == "disabled" and "solid" or "outline",
+                    variant = state.vrr_mode == "disabled" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("vrr", "disabled") end,
                 }),
@@ -207,19 +224,19 @@ render = function()
             ui.row({ gap = 6 }, {
                 ui.button({
                     text = "Solid Theme",
-                    variant = state.border_effect == "none" and "solid" or "outline",
+                    variant = state.border_effect == "none" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("border", "none") end,
                 }),
                 ui.button({
                     text = "Pulse Glow",
-                    variant = state.border_effect == "pulse" and "solid" or "outline",
+                    variant = state.border_effect == "pulse" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("border", "pulse") end,
                 }),
                 ui.button({
                     text = "Audio Reactive",
-                    variant = state.border_effect == "audio" and "solid" or "outline",
+                    variant = state.border_effect == "audio" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("border", "audio") end,
                 }),
@@ -238,19 +255,19 @@ render = function()
             ui.row({ gap = 6 }, {
                 ui.button({
                     text = "Normal",
-                    variant = state.cursor_effect == "none" and "solid" or "outline",
+                    variant = state.cursor_effect == "none" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("cursor", "none") end,
                 }),
                 ui.button({
                     text = "Comet Trail",
-                    variant = state.cursor_effect == "trail" and "solid" or "outline",
+                    variant = state.cursor_effect == "trail" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("cursor", "trail") end,
                 }),
                 ui.button({
                     text = "Spotlight Glow",
-                    variant = state.cursor_effect == "glow" and "solid" or "outline",
+                    variant = state.cursor_effect == "glow" and "primary" or "outline",
                     flexGrow = 1,
                     onClick = function() runAction("cursor", "glow") end,
                 }),

@@ -1,6 +1,11 @@
 --!nonstrict
-local script = (noctalia.getenv("XDG_CONFIG_HOME") or (noctalia.getenv("HOME") .. "/.config"))
-    .. "/hypr/scripts/displays.py"
+local home = noctalia.getenv("HOME")
+local function scriptCmd(...)
+    if home and home ~= "" then
+        return {"python3", home .. "/.local/bin/desktop-displays", ...}
+    end
+    return {"desktop-displays", ...}
+end
 local displays = {}
 local errorMessage = ""
 local busy = false
@@ -21,7 +26,7 @@ end
 local function refresh()
     if not opened or busy or querying then return end
     querying = true
-    noctalia.runAsync({"python3", script, "status"}, function(result)
+    noctalia.runAsync(scriptCmd("status"), function(result)
         querying = false
         if not opened then return end
         accept(result)
@@ -33,7 +38,7 @@ local function change(display)
     busy = true
     errorMessage = ""
     render()
-    noctalia.runAsync({"python3", script, "set", display.role, display.enabled and "off" or "on"}, function(result)
+    noctalia.runAsync(scriptCmd("set", display.role, display.enabled and "off" or "on"), function(result)
         busy = false
         if not opened then return end
         accept(result)

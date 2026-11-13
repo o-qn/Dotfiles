@@ -26,14 +26,9 @@ order = [ "default" ]
     widget_spacing = 8
 
         [bar.default.monitor."Sceptre L24"]
+        center = [ "clock" ]
         end = [ "tray", "keyboard_layout", "network", "volume", "notifications", "bluetooth", "control-center" ]
         start = [ "launcher", "workspaces", "workspace-add-portrait", "layout-portrait", "active_window" ]
-
-        [bar.default.monitor.secondary]
-        center = [ "clock" ]
-        end = [ "keyboard_layout", "volume", "notifications", "control-center" ]
-        match = "Sceptre L24"
-        start = [ "launcher", "workspaces", "workspace-add-portrait", "layout-portrait" ]
 
 [brightness]
 enable_ddcutil = true
@@ -119,7 +114,7 @@ umbriel_overview_type_to_launch_enabled = true
 
     [shell.launcher]
     app_grid = false
-    pinned = [ "kitty", "zen-browser", "nemo" ]
+    pinned = [ "kitty", "brave-origin", "org.kde.dolphin" ]
     sort_by_usage = true
 
     [shell.panel]
@@ -146,7 +141,7 @@ source = "wallpaper"
 wallpaper_scheme = "dysfunctional"
 
     [theme.templates]
-    builtin_ids = ["alacritty", "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "qt", "umbriel"]
+    builtin_ids = ["alacritty", "btop", "gtk3", "gtk4", "kcolorscheme", "kitty", "niri", "qt", "umbriel"]
     community_ids = [ "discord", "steam" ]
     enable_builtin_templates = true
     enable_community_templates = false
@@ -156,18 +151,6 @@ wallpaper_scheme = "dysfunctional"
         input_path = "templates/hyprland/colors.lua"
         output_path = "$XDG_CONFIG_HOME/hypr/noctalia.lua"
         post_hook = "hyprctl eval 'apply_noctalia_theme()' || true"
-
-        [theme.templates.user.niri-accent]
-        hook_async = true
-        input_path = "templates/niri/colors.kdl"
-        output_path = "$XDG_CONFIG_HOME/niri/noctalia-colors.kdl"
-        post_hook = "niri msg action load-config-file || true"
-
-        [theme.templates.user.umbriel-accent]
-        hook_async = true
-        input_path = "templates/umbriel/colors.toml"
-        output_path = "$XDG_CONFIG_HOME/umbriel/noctalia.toml"
-        post_hook = "umbriel msg config-reload || true"
 
         [theme.templates.user.mango-accent]
         hook_async = true
@@ -233,7 +216,7 @@ tooltip = "New workspace on the main monitor"
 type = "custom_button"
 
     [widget.workspace-add-main.actions]
-    left = "exec python3 \"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/workspace.py\" new --monitor G2721P"
+    left = "exec python3 \"$HOME/.local/bin/desktop-workspace\" new --monitor G2721P"
 
 [widget.workspace-add-portrait]
 color = "primary"
@@ -242,7 +225,7 @@ tooltip = "New workspace on the portrait monitor"
 type = "custom_button"
 
     [widget.workspace-add-portrait.actions]
-    left = "exec python3 \"${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/workspace.py\" new --monitor Sceptre"
+    left = "exec python3 \"$HOME/.local/bin/desktop-workspace\" new --monitor Sceptre"
 
 [widget.workspaces]
 active_pill_size = 1.3
