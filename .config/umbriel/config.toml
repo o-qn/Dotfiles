@@ -24,7 +24,6 @@ files = [
 [general]
 autostart = [
     "noctalia --daemon",
-    "easyeffects --service-mode --hide-window",
 ]
 xwayland_native_resolution = true
 xwayland_primary_output = "DP-2"
@@ -175,7 +174,7 @@ blur_popups = true
 
 # Browser: crisp, opaque, full-width column
 [[window_rule]]
-match.app_id = "^(brave-origin|com\\.brave\\.Origin|brave-browser|[Zz]en(-browser|-alpha|-beta|-twilight)?|app\\.zen_browser\\.zen)$"
+match.app_id = "^([Zz]en(-browser|-alpha|-beta|-twilight)?|app\\.zen_browser\\.zen)$"
 default_maximize = true
 opacity = 1.0
 blur = false

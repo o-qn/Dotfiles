@@ -1,6 +1,6 @@
 # Desktop dotfiles
 
-Umbriel (main window manager) · Noctalia 5 · Niri 26 · Hyprland 0.56 · Kitty · Fish · Dolphin · Gwenview · Brave Origin · LazyVim.
+Umbriel (main window manager) · Noctalia 5 · Niri 26 · Hyprland 0.56 · Kitty · Fish · Dolphin · Gwenview · Zen · LazyVim.
 Requires Python 3.11+, Node.js, and the desktop apps installed.
 
 ```bash

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-for candidate in brave-origin brave-origin-stable brave-browser brave; do
+for candidate in zen-browser zen zen-bin; do
     if command -v "$candidate" >/dev/null 2>&1; then
         exec "$candidate" "$@"
     fi
 done
 
-if command -v flatpak >/dev/null 2>&1 && flatpak info com.brave.Origin >/dev/null 2>&1; then
-    exec flatpak run com.brave.Origin "$@"
+if command -v flatpak >/dev/null 2>&1 && flatpak info app.zen_browser.zen >/dev/null 2>&1; then
+    exec flatpak run app.zen_browser.zen "$@"
 fi
 
 exec xdg-open https://

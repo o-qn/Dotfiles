@@ -114,7 +114,7 @@ umbriel_overview_type_to_launch_enabled = true
 
     [shell.launcher]
     app_grid = false
-    pinned = [ "kitty", "brave-origin", "org.kde.dolphin" ]
+    pinned = [ "kitty", "app.zen_browser.zen", "org.kde.dolphin" ]
     sort_by_usage = true
 
     [shell.panel]

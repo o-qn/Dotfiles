@@ -47,13 +47,13 @@ case "$target" in
         ;;
 esac
 
-if command -v brave-origin >/dev/null 2>&1 \
-    || command -v brave-origin-stable >/dev/null 2>&1 \
-    || command -v brave-browser >/dev/null 2>&1 \
-    || { command -v flatpak >/dev/null 2>&1 && flatpak info com.brave.Origin >/dev/null 2>&1; }; then
-    printf '  OK       brave-origin\n'
+if command -v zen-browser >/dev/null 2>&1 \
+    || command -v zen >/dev/null 2>&1 \
+    || command -v zen-bin >/dev/null 2>&1 \
+    || { command -v flatpak >/dev/null 2>&1 && flatpak info app.zen_browser.zen >/dev/null 2>&1; }; then
+    printf '  OK       zen-browser\n'
 else
-    printf '  MISSING  brave-origin\n'
+    printf '  MISSING  zen-browser\n'
 fi
 
 case "$target" in

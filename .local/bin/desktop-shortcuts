@@ -61,7 +61,7 @@ UMBRIEL_ACTION_DESCRIPTIONS = {
     "spawn kitty -e btop": "System monitor",
     "spawn dolphin": "Open Dolphin",
     "spawn nemo": "Open Nemo",
-    "spawn ~/.local/bin/launch-browser": "Open Brave Origin",
+    "spawn ~/.local/bin/launch-browser": "Open Zen Browser",
     "spawn ~/.local/bin/desktop-shortcuts": "Search keyboard shortcuts",
     "spawn ~/.local/bin/desktop-shortcuts umbriel": "Search keyboard shortcuts",
     "spawn ~/.local/bin/desktop-reload": "Validate and reload configuration",
@@ -174,8 +174,6 @@ NIRI_ACTION_DESCRIPTIONS = {
     'spawn "kitty" "-e" "btop"': "System monitor",
     'spawn "dolphin"': "Open Dolphin",
     'spawn "nemo"': "Open Nemo",
-    'spawn "brave-origin"': "Open Brave Origin",
-    'spawn "brave-origin-stable"': "Open Brave Origin",
     'spawn "zen"': "Open Zen Browser",
     'spawn "zen-browser"': "Open Zen Browser",
     'switch-layout "next"': "Switch English / Arabic",
@@ -247,7 +245,7 @@ def describe_niri_action(action: str, title_override: str | None) -> str:
     if action in NIRI_ACTION_DESCRIPTIONS:
         return NIRI_ACTION_DESCRIPTIONS[action]
     if "launch-browser" in action:
-        return "Open Brave Origin"
+        return "Open Zen Browser"
     if "desktop-shortcuts" in action:
         return "Search keyboard shortcuts"
     if "desktop-doctor" in action:
@@ -297,7 +295,7 @@ def describe_umbriel_action(action: str) -> str:
     if action in UMBRIEL_ACTION_DESCRIPTIONS:
         return UMBRIEL_ACTION_DESCRIPTIONS[action]
     if "launch-browser" in action:
-        return "Open Brave Origin"
+        return "Open Zen Browser"
     if "desktop-shortcuts" in action:
         return "Search keyboard shortcuts"
     if "desktop-doctor" in action:

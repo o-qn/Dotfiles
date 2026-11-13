@@ -198,7 +198,7 @@ window-rule {
 
 // Browser Picture-in-Picture
 window-rule {
-    match app-id=r"(brave-origin|brave-browser|zen|firefox)" title=r"^[Pp]icture[- ][Ii]n[- ][Pp]icture$"
+    match app-id=r"(zen|firefox)" title=r"^[Pp]icture[- ][Ii]n[- ][Pp]icture$"
     open-floating true
 }
 
@@ -211,7 +211,7 @@ window-rule {
 
 // Open browsers maximized
 window-rule {
-    match app-id=r"^(brave-origin|com\.brave\.Origin|brave-browser|[Zz]en(-browser|-alpha|-beta|-twilight)?|app\.zen_browser\.zen)$"
+    match app-id=r"^([Zz]en(-browser|-alpha|-beta|-twilight)?|app\.zen_browser\.zen)$"
     open-maximized true
 }
 

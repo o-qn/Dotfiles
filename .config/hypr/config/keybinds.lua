@@ -14,7 +14,7 @@ end
 cmd("SUPER + Q", "kitty", "Open terminal")
 bind("SUPER + C", hl.dsp.window.close(), "Close focused window")
 cmd("SUPER + E", "dolphin", "Open Dolphin")
-cmd("SUPER + B", "~/.local/bin/launch-browser", "Open Brave Origin")
+cmd("SUPER + B", "~/.local/bin/launch-browser", "Open Zen Browser")
 shell("SUPER + R", "panel-toggle launcher", "Application launcher")
 shell("SUPER + V", "panel-toggle clipboard", "Clipboard history")
 bind("SUPER + SHIFT + SPACE", hl.dsp.window.float({ action = "toggle" }), "Toggle floating")
