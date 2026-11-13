@@ -24,6 +24,7 @@ files = [
 [general]
 autostart = [
     "noctalia --daemon",
+    "easyeffects --service-mode --hide-window",
 ]
 xwayland_native_resolution = true
 xwayland_primary_output = "DP-2"
@@ -119,7 +120,7 @@ enabled = true
 back_and_forth = true
 
 [layout]
-mode = "dwindle"
+mode = "scrolling"
 gap = 12
 extent_presets = [0.33333, 0.5, 0.66667, 1.0]
 
@@ -154,14 +155,14 @@ blur = false
 
 # Glass terminals & file manager (active: 0.90 opacity, inactive: 0.84 opacity)
 [[window_rule]]
-match.app_id = "^([Nn]emo)$"
+match.app_id = "^(org\\.kde\\.dolphin|dolphin|[Nn]emo)$"
 match.is_focused = true
 opacity = 0.90
 blur = true
 blur_popups = true
 
 [[window_rule]]
-match.app_id = "^([Nn]emo)$"
+match.app_id = "^(org\\.kde\\.dolphin|dolphin|[Nn]emo)$"
 match.is_focused = false
 opacity = 0.84
 blur = true
@@ -172,9 +173,9 @@ match.app_id = "^(kitty|desktop-doctor)$"
 blur = true
 blur_popups = true
 
-# Zen Browser: crisp, opaque, full-width column
+# Browser: crisp, opaque, full-width column
 [[window_rule]]
-match.app_id = "^([Zz]en(-browser|-alpha|-beta|-twilight)?|app\\.zen_browser\\.zen)$"
+match.app_id = "^(brave-origin|com\\.brave\\.Origin|brave-browser|[Zz]en(-browser|-alpha|-beta|-twilight)?|app\\.zen_browser\\.zen)$"
 default_maximize = true
 opacity = 1.0
 blur = false
@@ -286,10 +287,10 @@ blur = false
 # Applications (matching Hyprland keybinds.lua & Niri config.kdl)
 "Mod+Q"               = "spawn kitty"
 "Mod+Return"          = "spawn kitty"
-"Mod+E"               = "spawn ~/.config/hypr/scripts/desktop.sh files"
-"Mod+B"               = "spawn ~/.config/hypr/scripts/desktop.sh browser"
+"Mod+E"               = "spawn dolphin"
+"Mod+B"               = "spawn ~/.local/bin/launch-browser"
 "Mod+Escape"          = "spawn kitty -e btop"
-"Mod+Ctrl+Q"          = "spawn kitty --class desktop-doctor --title 'Desktop Check' -e ~/.config/hypr/scripts/desktop.sh doctor"
+"Mod+Ctrl+Q"          = "spawn kitty --class desktop-doctor --title 'Desktop Check' -e ~/.local/bin/desktop-doctor umbriel"
 
 # Layout Switching (English / Arabic)
 "Mod+Space"           = "keyboard-layout-next"
@@ -408,9 +409,9 @@ blur = false
 "Mod+Ctrl+WheelLeft"       = "column-move-left"
 
 # Help, Reload, Monitor Toggle, VRR & Session
-"Mod+F1"              = "spawn ~/.config/hypr/scripts/desktop.sh help"
+"Mod+F1"              = "spawn ~/.local/bin/desktop-shortcuts umbriel"
 "Mod+Shift+Slash"     = "cheatsheet-toggle"
-"Mod+Shift+R"         = "spawn ~/.config/hypr/scripts/desktop.sh reload"
+"Mod+Shift+R"         = "spawn ~/.local/bin/desktop-reload umbriel"
 "Mod+Ctrl+M"          = "output-toggle DP-3"
 "Mod+Shift+E"         = "session-quit"
 "Mod+Shift+D"         = "spawn ~/.local/bin/umbriel-toggle-vrr"
