@@ -146,9 +146,12 @@ enabled = [
     "desktop/umbriel-layout"
 ]
 
+[shell]
+avatar_path = "/home/qn/Pictures/wallpaper/nebula.jpg"
+
 [theme]
-builtin = "Nord"
-community_palette = "Inabakumori"
+builtin = "Dracula"
+community_palette = "ADW"
 mode = "dark"
 source = "wallpaper"
 wallpaper_scheme = "faithful"
@@ -159,16 +162,16 @@ wallpaper_scheme = "faithful"
     enable_community_templates = true
 
 [wallpaper.default]
-path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.last]
-path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.monitors.DP-2]
-path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.monitors.DP-3]
-path = "/home/qn/.local/share/wallpapers/wallhaven-e8ryvo.jpg"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [[wallpaper.favorite]]
 palette_source = "wallpaper"
@@ -199,3 +202,9 @@ palette_source = "wallpaper"
 path = "/home/qn/.local/share/wallpapers/tree.jpg"
 theme_mode = "dark"
 wallpaper_scheme = "vibrant"
+
+[[wallpaper.favorite]]
+builtin_palette = "Dracula"
+palette_source = "builtin"
+path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
+theme_mode = "dark"
