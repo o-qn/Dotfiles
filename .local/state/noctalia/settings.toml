@@ -3,11 +3,11 @@ config_version = 15
 [bar.default]
 center = [ "clock", "cat", "volume" ]
 end = [ "tray", "keyboard_layout", "network", "media", "notifications", "bluetooth", "control-center" ]
-start = [ "launcher", "workspaces", "workspace-add-main", "active_window", "layout-main" ]
+start = [ "launcher", "ws1-main", "workspaces", "workspace-add-main", "active_window", "layout-main" ]
 
     [bar.default.monitor."Sceptre L24"]
     end = [ "tray", "keyboard_layout", "network", "notifications", "bluetooth", "control-center" ]
-    start = [ "launcher", "workspaces", "workspace-add-portrait", "active_window", "layout-portrait" ]
+    start = [ "launcher", "ws1-portrait", "workspaces", "workspace-add-portrait", "active_window", "layout-portrait" ]
 
 [lockscreen_widgets]
 enabled = false

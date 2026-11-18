@@ -48,8 +48,7 @@ scale = 1.25
 transform = "normal"
 position = [1080, 388]
 bit_depth = 10
-workspaces = "dynamic"
-min_workspaces = 1
+workspaces = 10
 focus_at_startup = true
 
 [output.DP-3]
@@ -58,8 +57,7 @@ scale = 1.0
 transform = "90"
 position = [0, 11]
 vrr = "fullscreen"
-workspaces = "dynamic"
-min_workspaces = 1
+workspaces = 10
 
 # ─── Appearance & Effects ────────────────────────────────────────────────────
 
@@ -124,9 +122,9 @@ enabled = true
 [workspaces]
 back_and_forth = true
 
-# Pin workspace 1 on both monitors using dwindle; any other dynamic workspace defaults to scrolling.
+# Workspace 1 uses dwindle on both monitors; workspaces 2..10 default to scrolling.
 [[workspace]]
-name = "1"
+index = 1
 layout.mode = "dwindle"
 
 [layout]

@@ -16,6 +16,16 @@ entry = "main.luau"
 id = "portrait"
 entry = "portrait.luau"
 
+[[widget]]
+id = "ws1"
+entry = "ws1.luau"
+
+  [[widget.setting]]
+  key = "output"
+  type = "string"
+  label_key = "settings.output.label"
+  default = "DP-2"
+
 [[shortcut]]
 id = "shortcut"
 entry = "shortcut.luau"

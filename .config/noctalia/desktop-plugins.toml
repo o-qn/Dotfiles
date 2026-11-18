@@ -25,6 +25,14 @@ type = "desktop/umbriel-layout:main"
 [widget.layout-portrait]
 type = "desktop/umbriel-layout:portrait"
 
+[widget.ws1-main]
+type = "desktop/umbriel-layout:ws1"
+output = "DP-2"
+
+[widget.ws1-portrait]
+type = "desktop/umbriel-layout:ws1"
+output = "DP-3"
+
 # Wallpaper pickers live inside the Control Center.
 
 [[control_center.shortcuts]]
