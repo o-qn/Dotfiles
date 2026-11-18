@@ -18,6 +18,7 @@ local LAYOUTS = {
 }
 
 barWidget.setVisible(false)
+local activeDefaultMode = "scrolling"
 
 local function applyWorkspaces(workspaces)
     if type(workspaces) ~= "table" or #workspaces == 0 then
@@ -36,7 +37,10 @@ local function applyWorkspaces(workspaces)
         return
     end
 
-    local mode = tostring(target.layout or "dwindle")
+    local wsName = tostring(target.name or target.index or "")
+    activeDefaultMode = (wsName == "1") and "dwindle" or "scrolling"
+    local defaultLabel = (activeDefaultMode == "dwindle") and "Dwindle" or "Scroll"
+    local mode = tostring(target.layout or activeDefaultMode)
     local info = LAYOUTS[mode] or { glyph = "layout-board-split", label = mode, title = mode }
 
     barWidget.setVisible(true)
@@ -44,9 +48,9 @@ local function applyWorkspaces(workspaces)
     barWidget.setText(info.label)
     barWidget.setColor(target.layout_override and "secondary" or "primary")
     barWidget.setTooltip(
-        "Workspace " .. tostring(target.name or target.index or "") .. " (DP-3): " .. info.title
+        "Workspace " .. wsName .. " (DP-3): " .. info.title
         .. "\nLeft-click: Cycle this workspace's layout (Dwindle → Scroll → Master → Stack)"
-        .. "\nRight-click: Reset this workspace to Dwindle"
+        .. "\nRight-click: Reset this workspace to " .. defaultLabel
         .. "\nMiddle-click: Open Umbriel Control Panel"
     )
 end
@@ -83,7 +87,7 @@ function onClick()
 end
 
 function onRightClick()
-    noctalia.runAsync(helperCmd("dwindle", "--output", TARGET_OUTPUT))
+    noctalia.runAsync(helperCmd(activeDefaultMode, "--output", TARGET_OUTPUT))
 end
 
 function onMiddleClick()

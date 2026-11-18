@@ -131,7 +131,7 @@ render = function()
                     flexGrow = 1,
                 }),
                 ui.label({
-                    text = state.layout_override and "Custom for this workspace" or "Default (Dwindle)",
+                    text = state.layout_override and "Custom for this workspace" or (state.workspace == "1" and "Default (Dwindle)" or "Default (Scroll)"),
                     fontSize = 11,
                     color = state.layout_override and "primary" or "on_surface_variant",
                 }),

@@ -43,7 +43,39 @@ widget_order = []
     visible = true
 
 [dock]
-enabled = false
+active_monitor_only = false
+active_opacity = 1.0
+active_scale = 1.0
+auto_hide = false
+background_opacity = 0.0
+border = "outline"
+border_width = 0.0
+concave_edge_corners = false
+cross_axis_padding = 0
+enabled = true
+icon_size = 26
+inactive_opacity = 0.9
+inactive_scale = 0.95
+item_spacing = 8
+launcher_position = "none"
+layer = "top"
+magnification = false
+main_axis_padding = 6
+margin_edge = 8
+margin_ends = 10
+pinned = [ "kitty", "app.zen_browser.zen", "org.kde.dolphin" ]
+position = "bottom"
+radius = 12
+radius_bottom_left = 12
+radius_bottom_right = 12
+radius_top_left = 12
+radius_top_right = 12
+reserve_space = false
+shadow = false
+show_dots = true
+show_instance_count = false
+show_running = true
+smart_auto_hide = true
 
 [idle]
 behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]

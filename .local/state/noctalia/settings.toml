@@ -9,13 +9,6 @@ start = [ "launcher", "workspaces", "workspace-add-main", "active_window", "layo
     end = [ "tray", "keyboard_layout", "network", "notifications", "bluetooth", "control-center" ]
     start = [ "launcher", "workspaces", "workspace-add-portrait", "active_window", "layout-portrait" ]
 
-[dock]
-cross_axis_padding = 0
-icon_size = 38
-item_spacing = 0
-launcher_position = "end"
-show_dots = true
-
 [lockscreen_widgets]
 enabled = false
 schema_version = 2
