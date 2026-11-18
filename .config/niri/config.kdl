@@ -258,6 +258,7 @@ binds {
     Mod+E        { spawn "dolphin"; }
     Mod+B        { spawn-sh "~/.local/bin/launch-browser"; }
     Mod+Escape   { spawn "kitty" "-e" "btop"; }
+    Mod+U hotkey-overlay-title="Toggle network tuning (CAKE / default)" { spawn-sh "~/.local/bin/net-toggle"; }
     Mod+Ctrl+Q   { spawn-sh "kitty --class desktop-doctor --title 'Desktop Check' -e ~/.local/bin/desktop-doctor niri"; }
 
     // Layout Switching (English / Arabic)

@@ -43,6 +43,7 @@ shell("CTRL + ALT + A", "screenshot-annotate", "Freeze screen and annotate")
 cmd("SUPER + F1", "~/.local/bin/desktop-shortcuts hyprland", "Search keyboard shortcuts")
 cmd("SUPER + CTRL + Q", "kitty --class desktop-doctor --title 'Desktop Check' -e ~/.local/bin/desktop-doctor hyprland", "Desktop health check")
 cmd("SUPER + ESCAPE", "kitty -e btop", "System monitor")
+cmd("SUPER + U", "~/.local/bin/net-toggle", "Toggle network tuning (CAKE / default)")
 cmd("SUPER + SHIFT + R", "~/.local/bin/desktop-reload hyprland", "Validate and reload configuration")
 
 for _, direction in ipairs({ "left", "right", "up", "down" }) do

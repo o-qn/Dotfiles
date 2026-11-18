@@ -67,6 +67,7 @@ UMBRIEL_ACTION_DESCRIPTIONS = {
     "spawn ~/.local/bin/desktop-reload": "Validate and reload configuration",
     "spawn ~/.local/bin/desktop-reload umbriel": "Validate and reload configuration",
     "spawn ~/.local/bin/umbriel-toggle-vrr": "Cycle Variable Refresh Rate (VRR) mode",
+    "spawn ~/.local/bin/net-toggle": "Toggle network tuning (CAKE / default)",
     "config-reload": "Reload Umbriel configuration",
     "output-toggle DP-3": "Toggle portrait monitor (DP-3)",
     "session-quit": "Quit Umbriel session",
@@ -254,6 +255,8 @@ def describe_niri_action(action: str, title_override: str | None) -> str:
         return "Validate and reload configuration"
     if "niri-toggle-vrr" in action:
         return "Toggle Variable Refresh Rate (VRR)"
+    if "net-toggle" in action:
+        return "Toggle network tuning (CAKE / default)"
     if "DP-3" in action:
         return "Toggle portrait monitor"
     m = re.match(r"^focus-workspace (\d+)$", action)
@@ -302,6 +305,8 @@ def describe_umbriel_action(action: str) -> str:
         return "Desktop health check"
     if "desktop-reload" in action:
         return "Validate and reload configuration"
+    if "net-toggle" in action:
+        return "Toggle network tuning (CAKE / default)"
     m = re.match(r"^workspace-switch (\d+)$", action)
     if m:
         return f"Focus workspace {m.group(1)}"
