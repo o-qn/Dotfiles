@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEV="enp7s0"
+DEFAULT_UP="70"
+DEFAULT_DOWN="400"
+
+notify() {
+    local title="$1" body="$2"
+    if command -v noctalia >/dev/null 2>&1; then
+        noctalia msg notification-show "$title" "$body" >/dev/null 2>&1 || true
+    elif command -v notify-send >/dev/null 2>&1; then
+        notify-send -u low -t 2500 "$title" "$body"
+    fi
+}
+
+is_limited() {
+    tc qdisc show dev "$DEV" 2>/dev/null | grep -qE 'cake .*bandwidth [0-9]'
+}
+
+ensure_cake_setup() {
+    modprobe tcp_bbr ifb
+    sysctl -w net.core.default_qdisc=fq net.ipv4.tcp_congestion_control=bbr >/dev/null
+    ip link set dev "$DEV" mtu 1472
+    if ! ip link show dev ifb0 >/dev/null 2>&1; then
+        ip link add ifb0 type ifb
+    fi
+    ip link set dev ifb0 up
+    if ! tc filter show dev "$DEV" parent ffff: 2>/dev/null | grep -q 'ifb0'; then
+        tc qdisc del dev "$DEV" ingress 2>/dev/null || true
+        tc qdisc add dev "$DEV" handle ffff: ingress
+        tc filter replace dev "$DEV" parent ffff: protocol all prio 1 matchall action mirred egress redirect dev ifb0
+    fi
+}
+
+apply_cake_mode() {
+    local ul_spec="$1" dl_spec="$2"
+    ensure_cake_setup
+    # shellcheck disable=SC2086
+    tc qdisc replace dev "$DEV" root cake $ul_spec diffserv4 ack-filter
+    # shellcheck disable=SC2086
+    tc qdisc replace dev ifb0 root cake $dl_spec diffserv4 ingress
+}
+
+apply_stock() {
+    tc qdisc del dev "$DEV" root 2>/dev/null || true
+    tc qdisc del dev "$DEV" ingress 2>/dev/null || true
+    ip link del ifb0 2>/dev/null || true
+    ip link set dev "$DEV" mtu 1500
+    sysctl -w net.core.default_qdisc=fq_codel net.ipv4.tcp_congestion_control=cubic >/dev/null
+}
+
+run_privileged() {
+    local self
+    self="$(readlink -f "$0")"
+    if [[ $EUID -eq 0 ]]; then
+        "$@"
+    elif sudo -n true 2>/dev/null || [[ -t 0 ]]; then
+        sudo "$self" "$@"
+    else
+        pkexec "$self" "$@"
+    fi
+}
+
+strip_unit() {
+    printf '%s' "${1%[mM][bB][iI][tT]}"
+}
+
+validate_rate() {
+    [[ "$1" =~ ^[1-9][0-9]*$ ]] || {
+        printf 'Invalid bandwidth rate: %s\n' "$1" >&2
+        exit 2
+    }
+}
+
+case "${1:-toggle}" in
+    _tune)
+        up="$(strip_unit "${2:-$DEFAULT_UP}")"
+        down="$(strip_unit "${3:-$DEFAULT_DOWN}")"
+        validate_rate "$up"
+        validate_rate "$down"
+        apply_cake_mode "bandwidth ${up}mbit" "bandwidth ${down}mbit"
+        exit 0
+        ;;
+    _reset)
+        apply_cake_mode "unlimited" "unlimited"
+        exit 0
+        ;;
+    _stock)
+        apply_stock
+        exit 0
+        ;;
+    status)
+        if is_limited; then
+            printf 'limited\n'
+        elif tc qdisc show dev "$DEV" 2>/dev/null | grep -q 'cake'; then
+            printf 'unlimited\n'
+        else
+            printf 'unshaped\n'
+        fi
+        printf 'TCP CC: %s | Default qdisc: %s | %s\n' \
+            "$(sysctl -n net.ipv4.tcp_congestion_control)" \
+            "$(sysctl -n net.core.default_qdisc)" \
+            "$(ip link show dev "$DEV" | grep -o 'mtu [0-9]*')"
+        printf 'Upload (%s):   ' "$DEV"
+        tc qdisc show dev "$DEV" | grep 'cake' || printf 'not cake\n'
+        printf 'Download (ifb0):   '
+        tc qdisc show dev ifb0 2>/dev/null | grep 'cake' || printf 'no ifb0\n'
+        exit 0
+        ;;
+    tune|on)
+        action="tune"
+        up="$(strip_unit "${2:-$DEFAULT_UP}")"
+        down="$(strip_unit "${3:-$DEFAULT_DOWN}")"
+        ;;
+    reset|off)
+        action="reset"
+        ;;
+    stock)
+        action="stock"
+        ;;
+    toggle)
+        if is_limited; then
+            action="reset"
+        else
+            action="tune"
+            up="$(strip_unit "${2:-$DEFAULT_UP}")"
+            down="$(strip_unit "${3:-$DEFAULT_DOWN}")"
+        fi
+        ;;
+    *)
+        printf 'Usage: %s [toggle [up_mbit down_mbit]|tune [up_mbit down_mbit]|reset|stock|status]\n' "${0##*/}" >&2
+        exit 2
+        ;;
+esac
+
+if [[ "$action" == "tune" ]]; then
+    validate_rate "$up"
+    validate_rate "$down"
+    if run_privileged _tune "$up" "$down"; then
+        msg="BBR + MTU 1472 + CAKE (${up}mbit up / ${down}mbit down)"
+        printf 'Gaming mode on %s: %s\n' "$DEV" "$msg"
+        notify "Network Gaming Limit ($DEV)" "$msg"
+    else
+        rc=$?
+        [[ $rc -eq 126 || $rc -eq 127 ]] || notify "Network Tune Failed ($DEV)" "Could not apply BBR + CAKE"
+        exit "$rc"
+    fi
+elif [[ "$action" == "reset" ]]; then
+    if run_privileged _reset; then
+        msg="BBR + MTU 1472 + CAKE unlimited + ifb0"
+        printf 'Unlimited mode on %s: %s\n' "$DEV" "$msg"
+        notify "Network Unlimited ($DEV)" "$msg"
+    else
+        rc=$?
+        [[ $rc -eq 126 || $rc -eq 127 ]] || notify "Network Unlimited Failed ($DEV)" "Could not switch CAKE to unlimited"
+        exit "$rc"
+    fi
+else
+    if run_privileged _stock; then
+        msg="cubic + fq_codel + MTU 1500 (no CAKE)"
+        printf 'Reverted %s to stock defaults: %s\n' "$DEV" "$msg"
+        notify "Network Stock Defaults ($DEV)" "$msg"
+    else
+        rc=$?
+        [[ $rc -eq 126 || $rc -eq 127 ]] || notify "Network Stock Reset Failed ($DEV)" "Could not revert stock defaults"
+        exit "$rc"
+    fi
+fi
