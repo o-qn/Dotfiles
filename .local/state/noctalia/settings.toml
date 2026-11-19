@@ -153,8 +153,8 @@ avatar_path = "/home/qn/Pictures/wallpaper/nebula.jpg"
 builtin = "Dracula"
 community_palette = "ADW"
 mode = "dark"
-source = "wallpaper"
-wallpaper_scheme = "faithful"
+source = "builtin"
+wallpaper_scheme = "vibrant"
 
     [theme.templates]
     builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "mango", "niri", "qt", "umbriel" ]
@@ -162,16 +162,16 @@ wallpaper_scheme = "faithful"
     enable_community_templates = true
 
 [wallpaper.default]
-path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
 
 [wallpaper.last]
-path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
 
 [wallpaper.monitors.DP-2]
-path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
 
 [wallpaper.monitors.DP-3]
-path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
+path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
 
 [[wallpaper.favorite]]
 palette_source = "wallpaper"
