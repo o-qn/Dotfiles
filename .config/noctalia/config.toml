@@ -21,14 +21,14 @@ order = [ "default" ]
     radius_top_right = 12
     reserve_space = true
     shadow = true
-    start = [ "launcher", "ws1-main", "workspaces", "workspace-add-main", "layout-main" ]
+    start = [ "launcher", "ws1-main", "workspaces", "workspace-add-main", "layout-main", "umbriel-status" ]
     thickness = 38
     widget_spacing = 8
 
         [bar.default.monitor."Sceptre L24"]
         center = [ "clock" ]
         end = [ "tray", "keyboard_layout", "network", "volume", "notifications", "bluetooth", "control-center" ]
-        start = [ "launcher", "ws1-portrait", "workspaces", "workspace-add-portrait", "layout-portrait", "active_window" ]
+        start = [ "launcher", "ws1-portrait", "workspaces", "workspace-add-portrait", "layout-portrait", "umbriel-status", "active_window" ]
 
 [brightness]
 enable_ddcutil = true

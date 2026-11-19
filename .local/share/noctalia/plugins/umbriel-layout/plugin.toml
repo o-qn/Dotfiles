@@ -1,20 +1,22 @@
 id = "desktop/umbriel-layout"
 name = "Umbriel Controls"
-version = "1.0.0"
+version = "2.0.0"
 plugin_api = 9
 author = "qn"
 license = "MIT"
 icon = "layout-board-split"
-description = "Per-workspace layout indicators and Control Center panel for Umbriel."
+description = "Per-workspace layout indicators, submap/scratchpad/cast status pill, and dual-monitor Control Center for Umbriel."
 dependencies = ["umbriel", "python3"]
 
 [[widget]]
-id = "main"
-entry = "main.luau"
+id = "layout"
+entry = "layout.luau"
 
-[[widget]]
-id = "portrait"
-entry = "portrait.luau"
+  [[widget.setting]]
+  key = "output"
+  type = "string"
+  label_key = "settings.output.label"
+  default = "main"
 
 [[widget]]
 id = "ws1"
@@ -24,7 +26,11 @@ entry = "ws1.luau"
   key = "output"
   type = "string"
   label_key = "settings.output.label"
-  default = "DP-2"
+  default = "main"
+
+[[widget]]
+id = "status"
+entry = "status.luau"
 
 [[shortcut]]
 id = "shortcut"
@@ -33,7 +39,7 @@ entry = "shortcut.luau"
 [[panel]]
 id = "controls"
 entry = "panel.luau"
-width = 560
-height = 680
+width = 580
+height = 740
 placement = "attached"
 position = "auto"

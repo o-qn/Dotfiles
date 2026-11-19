@@ -20,18 +20,23 @@ input_devices = ["/dev/input/by-id/usb-SteelSeries_SteelSeries_Apex_7_TKL*-event
 executable_path = "evtest"
 
 [widget.layout-main]
-type = "desktop/umbriel-layout:main"
+type = "desktop/umbriel-layout:layout"
+output = "main"
 
 [widget.layout-portrait]
-type = "desktop/umbriel-layout:portrait"
+type = "desktop/umbriel-layout:layout"
+output = "portrait"
 
 [widget.ws1-main]
 type = "desktop/umbriel-layout:ws1"
-output = "DP-2"
+output = "main"
 
 [widget.ws1-portrait]
 type = "desktop/umbriel-layout:ws1"
-output = "DP-3"
+output = "portrait"
+
+[widget.umbriel-status]
+type = "desktop/umbriel-layout:status"
 
 # Wallpaper pickers live inside the Control Center.
 

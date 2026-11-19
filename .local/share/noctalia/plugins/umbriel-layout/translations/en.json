@@ -1,7 +1,7 @@
 {
   "settings": {
     "output": {
-      "label": "Monitor Output"
+      "label": "Monitor (main, portrait, model, or connector)"
     }
   }
 }
