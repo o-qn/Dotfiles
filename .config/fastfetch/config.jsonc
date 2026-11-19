@@ -5,133 +5,124 @@
         "height": 15,
         "width": 30,
         "padding": {
-            "top": 5,
-            "left": 3
+            "top": 3,
+            "left": 2,
+            "right": 3
         },
         "color": {
             "1": "magenta",
-            "2": "blue"
+            "2": "cyan"
+        }
+    },
+    "display": {
+        "separator": "  ",
+        "key": {
+            "width": 17
+        },
+        "color": {
+            "title": "magenta",
+            "separator": "90"
+        },
+        "percent": {
+            "type": 1,
+            "color": {
+                "green": "green",
+                "yellow": "yellow",
+                "red": "red"
+            }
         }
     },
     "modules": [
-        "break",
+        {
+            "type": "title",
+            "key": "\u001b[90m╭─\u001b[0m \u001b[1;35m\u001b[0m",
+            "keyWidth": 5,
+            "format": "\u001b[1;35m{user-name}\u001b[0;90m@\u001b[1;36m{host-name}\u001b[0m"
+        },
         {
             "type": "custom",
-            "format": "\u001b[90m┌──────────────────────Hardware──────────────────────┐"
+            "format": "\u001b[90m├─ \u001b[1;32m󰍛  Hardware \u001b[0;90m────────────────────────────────────\u001b[0m"
         },
         {
             "type": "host",
-            "key": "󰌢  PC",
-            "keyColor": "green"
+            "key": "\u001b[90m│\u001b[0;32m  󰌢  Host",
+            "format": "{name}"
         },
         {
             "type": "cpu",
-            "key": "│ ├󰻠 ",
-            "keyColor": "green"
+            "key": "\u001b[90m│\u001b[0;32m  󰻠  CPU",
+            "format": "{name} ({cores-logical}) @ {freq-max}"
         },
         {
             "type": "gpu",
-            "key": "│ ├󰍹 ",
-            "keyColor": "green"
+            "key": "\u001b[90m│\u001b[0;32m  󰢮  GPU",
+            "format": "{vendor} {name}"
         },
         {
             "type": "memory",
-            "key": "│ ├󰑭 ",
-            "keyColor": "green"
+            "key": "\u001b[90m│\u001b[0;32m  󰑭  Memory",
+            "format": "{used} / {total} ({percentage})"
         },
         {
             "type": "disk",
-            "key": "└ └󰋊 ",
-            "keyColor": "green"
+            "key": "\u001b[90m│\u001b[0;32m  󰋊  Disk",
+            "folders": "/",
+            "format": "{size-used} / {size-total} ({size-percentage}) \u001b[90m·\u001b[0m {filesystem}"
         },
         {
             "type": "custom",
-            "format": "\u001b[90m└────────────────────────────────────────────────────┘"
-        },
-        "break",
-        {
-            "type": "custom",
-            "format": "\u001b[90m┌──────────────────────Software──────────────────────┐"
+            "format": "\u001b[90m├─ \u001b[1;36m󰣆  Software \u001b[0;90m────────────────────────────────────\u001b[0m"
         },
         {
             "type": "os",
-            "key": "  OS",
-            "keyColor": "yellow"
+            "key": "\u001b[90m│\u001b[0;36m    OS"
         },
         {
             "type": "kernel",
-            "key": "│ ├󰌽 ",
-            "keyColor": "yellow"
-        },
-        {
-            "type": "bios",
-            "key": "│ ├󰖡 ",
-            "keyColor": "yellow"
+            "key": "\u001b[90m│\u001b[0;36m  󰌽  Kernel",
+            "format": "{release}"
         },
         {
             "type": "packages",
-            "key": "│ ├󰏗 ",
-            "keyColor": "yellow"
+            "key": "\u001b[90m│\u001b[0;36m  󰏗  Packages"
         },
         {
             "type": "shell",
-            "key": "└ └󰞷 ",
-            "keyColor": "yellow"
-        },
-        "break",
-        {
-            "type": "de",
-            "key": "󰧨  DE",
-            "keyColor": "blue"
+            "key": "\u001b[90m│\u001b[0;36m  󰞷  Shell"
         },
         {
             "type": "lm",
-            "key": "│ ├󰍁 ",
-            "keyColor": "blue"
+            "key": "\u001b[90m│\u001b[0;34m  󰍁  Login"
         },
         {
             "type": "wm",
-            "key": "│ ├󱂬 ",
-            "keyColor": "blue"
-        },
-        {
-            "type": "wmtheme",
-            "key": "│ ├󰉦 ",
-            "keyColor": "blue"
+            "key": "\u001b[90m│\u001b[0;34m  󱂬  WM"
         },
         {
             "type": "terminal",
-            "key": "└ └󰆍 ",
-            "keyColor": "blue"
+            "key": "\u001b[90m│\u001b[0;34m  󰆍  Terminal"
         },
         {
             "type": "custom",
-            "format": "\u001b[90m└────────────────────────────────────────────────────┘"
-        },
-        "break",
-        {
-            "type": "custom",
-            "format": "\u001b[90m┌────────────────────Uptime / Age / DT────────────────────┐"
+            "format": "\u001b[90m├─ \u001b[1;35m󰅐  Session \u001b[0;90m─────────────────────────────────────\u001b[0m"
         },
         {
             "type": "command",
-            "key": "  ›  OS Age  ",
-            "keyColor": "magenta",
-            "text": "birth_install=$(stat -c %W /); current=$(date +%s); time_progression=$((current - birth_install)); days_difference=$((time_progression / 86400)); echo $days_difference days"
+            "key": "\u001b[90m│\u001b[0;35m  󰃭  OS Age",
+            "text": "b=$(stat -c %W /); [ \"$b\" -gt 0 ] 2>/dev/null && echo \"$(( ($(date +%s) - b) / 86400 )) days\" || echo unknown"
         },
         {
             "type": "uptime",
-            "key": "  ›  Uptime  ",
-            "keyColor": "magenta"
+            "key": "\u001b[90m│\u001b[0;35m  󰔟  Uptime"
         },
         {
             "type": "datetime",
-            "key": "  ›  DateTime  ",
-            "keyColor": "magenta"
+            "key": "\u001b[90m│\u001b[0;35m  󰥔  DateTime",
+            "format": "{year}-{month-pretty}-{day-pretty} \u001b[90m·\u001b[0m {hour-pretty}:{minute-pretty}"
         },
         {
             "type": "custom",
-            "format": "\u001b[90m└─────────────────────────────────────────────────────────┘"
+            "format": "\u001b[90m╰──────────────────────────────────────────────────\u001b[0m"
         },
         {
             "type": "colors",
