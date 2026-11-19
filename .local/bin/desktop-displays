@@ -5,14 +5,21 @@ import fcntl
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
 
 DISPLAYS = (("main", "Main", "G2721P"), ("portrait", "Portrait", "Sceptre L24"))
+_COMPOSITOR: str | None = None
 
 
-def is_umbriel():
+def is_umbriel() -> bool:
+    if not shutil.which("umbriel"):
+        return False
+    sock = os.environ.get("UMBRIEL_SOCKET", "")
+    if sock:
+        return Path(sock).is_socket()
     return subprocess.run(
         ["umbriel", "outputs", "-j"],
         stdout=subprocess.DEVNULL,
@@ -20,7 +27,9 @@ def is_umbriel():
     ).returncode == 0
 
 
-def is_niri():
+def is_niri() -> bool:
+    if not shutil.which("niri"):
+        return False
     sock = os.environ.get("NIRI_SOCKET", "")
     if not sock or not Path(sock).is_socket():
         return False
@@ -29,6 +38,18 @@ def is_niri():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     ).returncode == 0
+
+
+def detect_compositor() -> str:
+    global _COMPOSITOR
+    if _COMPOSITOR is None:
+        if is_umbriel():
+            _COMPOSITOR = "umbriel"
+        elif is_niri():
+            _COMPOSITOR = "niri"
+        else:
+            _COMPOSITOR = "hyprland"
+    return _COMPOSITOR
 
 
 def query(command):
@@ -41,19 +62,28 @@ def status_umbriel():
     displays = []
     for role, label, model in DISPLAYS:
         monitor = next(
-            (m for m in outputs if model in f"{m.get('make', '')} {m.get('model', '')} {m.get('description', '')}"),
+            (
+                m
+                for m in outputs
+                if model in f"{m.get('make', '')} {m.get('model', '')} {m.get('description', '')} {m.get('config_name', '')}"
+            ),
             None,
         )
         enabled = bool(monitor and monitor.get("enabled"))
         raw_ws = str(monitor.get("active_workspace") or "").rsplit(":", 1)[-1] if monitor else ""
-        workspace = int(raw_ws) if raw_ws.isdigit() else 0
+        if not enabled or not raw_ws:
+            workspace = 0
+        elif raw_ws.isdigit():
+            workspace = int(raw_ws)
+        else:
+            workspace = raw_ws
         displays.append({
             "role": role,
             "label": label,
             "connector": monitor.get("name", "") if monitor else "",
             "connected": monitor is not None,
             "enabled": enabled,
-            "workspace": workspace if enabled else 0,
+            "workspace": workspace,
             "can_disable": enabled and enabled_count > 1,
         })
     return {"displays": displays}
@@ -92,11 +122,7 @@ def status_niri():
     return {"displays": displays}
 
 
-def status():
-    if is_umbriel():
-        return status_umbriel()
-    if is_niri():
-        return status_niri()
+def status_hyprland():
     active = query(["monitors"])
     connected = query(["monitors", "all"])
     names = {monitor["name"] for monitor in active}
@@ -117,20 +143,29 @@ def status():
     return {"displays": displays}
 
 
+def status(comp: str | None = None):
+    comp = comp or detect_compositor()
+    if comp == "umbriel":
+        return status_umbriel()
+    if comp == "niri":
+        return status_niri()
+    return status_hyprland()
+
+
 def set_primary():
-    if is_umbriel():
-        current = status_umbriel()
+    comp = detect_compositor()
+    if comp in ("umbriel", "niri"):
+        current = status(comp)
         main = next((d for d in current["displays"] if d["role"] == "main" and d["enabled"]), None)
-        return {"primary": main["connector"] if main else "DP-2"}
-    if is_niri():
-        current = status_niri()
-        main = next((d for d in current["displays"] if d["role"] == "main" and d["enabled"]), None)
-        return {"primary": main["connector"] if main else "DP-2"}
+        fallback = next((d for d in current["displays"] if d["enabled"]), None)
+        chosen = main or fallback
+        return {"primary": chosen["connector"] if chosen else None}
     active = query(["monitors"])
     if not active:
         return {"primary": None}
     target = next((m for m in active if "G2721P" in m.get("description", "")), active[0])
     # XWayland clients can otherwise choose the first output after a reconnect.
+    result = None
     for _ in range(5):
         result = subprocess.run(["xrandr", "--query"], capture_output=True, text=True)
         output = next((line for line in result.stdout.splitlines()
@@ -141,26 +176,36 @@ def set_primary():
             result = subprocess.run(["xrandr", "--output", target["name"], "--primary"],
                                     capture_output=True, text=True)
         time.sleep(0.1)
-    raise RuntimeError(result.stderr.strip() or "Cannot confirm XWayland primary display")
+    raise RuntimeError((result.stderr.strip() if result else "") or "Cannot confirm XWayland primary display")
 
 
-def set_enabled(role, enabled):
+def set_enabled(role: str, enabled: bool | None):
+    comp = detect_compositor()
     runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+    runtime.mkdir(parents=True, exist_ok=True)
     with (runtime / "desktop-displays.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        current = status()
+        current = status(comp)
         display = next(d for d in current["displays"] if d["role"] == role)
         if not display["connected"]:
             raise RuntimeError("This monitor is disconnected")
-        if display["enabled"] == enabled:
+        target_enabled = (not display["enabled"]) if enabled is None else enabled
+        if display["enabled"] == target_enabled:
             return current
-        if not enabled and not display["can_disable"]:
+        if not target_enabled and not display["can_disable"]:
             raise RuntimeError("Keep the remaining monitor enabled")
-        if is_umbriel():
-            action = "output-enable" if enabled else "output-disable"
+        if comp == "umbriel":
+            action = "output-enable" if target_enabled else "output-disable"
             subprocess.run(["umbriel", "msg", action, display["connector"]], check=True)
-        elif is_niri():
-            state = "on" if enabled else "off"
+            subprocess.run(["umbriel", "settle"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+            for _ in range(15):
+                current = status_umbriel()
+                if next(d for d in current["displays"] if d["role"] == role)["enabled"] == target_enabled:
+                    return current
+                time.sleep(0.1)
+            raise RuntimeError("Monitor change did not complete")
+        elif comp == "niri":
+            state = "on" if target_enabled else "off"
             subprocess.run(["niri", "msg", "output", display["connector"], state], check=True)
         else:
             code = f"toggle_display({json.dumps(role)})"
@@ -169,27 +214,31 @@ def set_enabled(role, enabled):
                 raise RuntimeError(result.stdout.strip() or result.stderr.strip())
         for _ in range(30):
             time.sleep(0.1)
-            current = status()
-            if next(d for d in current["displays"] if d["role"] == role)["enabled"] == enabled:
+            current = status(comp)
+            if next(d for d in current["displays"] if d["role"] == role)["enabled"] == target_enabled:
                 # Let workspace restoration and native panel recreation settle.
                 time.sleep(0.6)
-                return status()
+                return status(comp)
         raise RuntimeError("Monitor change did not complete")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("status", "set", "primary"), default="status", nargs="?")
+    parser.add_argument("action", choices=("status", "set", "toggle", "primary"), default="status", nargs="?")
     parser.add_argument("role", choices=("main", "portrait"), nargs="?")
     parser.add_argument("mode", choices=("on", "off"), nargs="?")
     args = parser.parse_args()
     if args.action == "set" and (args.role is None or args.mode is None):
         parser.error("set requires a role and on/off")
+    if args.action == "toggle" and args.role is None:
+        parser.error("toggle requires a role")
     try:
         if args.action == "primary":
             result = set_primary()
         elif args.action == "set":
             result = set_enabled(args.role, args.mode == "on")
+        elif args.action == "toggle":
+            result = set_enabled(args.role, None)
         else:
             result = status()
     except (RuntimeError, OSError, subprocess.SubprocessError, ValueError) as error:

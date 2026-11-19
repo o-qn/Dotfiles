@@ -2,11 +2,18 @@
 set -euo pipefail
 
 is_niri() {
-    [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] && niri msg version >/dev/null 2>&1
+    command -v niri >/dev/null 2>&1 && [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] && niri msg version >/dev/null 2>&1
 }
 
 is_umbriel() {
-    command -v umbriel >/dev/null 2>&1 && umbriel outputs -j >/dev/null 2>&1
+    if ! command -v umbriel >/dev/null 2>&1; then
+        return 1
+    fi
+    if [[ -n "${UMBRIEL_SOCKET:-}" ]]; then
+        [[ -S "${UMBRIEL_SOCKET}" ]]
+        return
+    fi
+    umbriel outputs -j >/dev/null 2>&1
 }
 
 detect_compositor() {
@@ -28,18 +35,42 @@ check_app() {
     fi
 }
 
+check_service() {
+    local svc="$1"
+    if command -v systemctl >/dev/null 2>&1 && systemctl --user is-active --quiet "$svc"; then
+        printf '  OK       %s (active)\n' "$svc"
+    else
+        printf '  WARN     %s (not active)\n' "$svc"
+    fi
+}
+
 target="${1:-$(detect_compositor)}"
 
-printf '\033[38;2;122;162;247mDESKTOP CHECK\033[0m\n\n'
+printf '\033[38;2;122;162;247mDESKTOP CHECK (%s)\033[0m\n\n' "$target"
 case "$target" in
     umbriel)
-        for app in umbriel noctalia kitty dolphin qt6ct; do check_app "$app"; done
+        for app in umbriel noctalia python3 kitty dolphin qt6ct umbriel-ctl umbriel-toggle-vrr umbriel-watcher; do
+            check_app "$app"
+        done
+        check_service "xdg-desktop-portal-umbriel.service"
+        if [[ -n "${UMBRIEL_SOCKET:-}" && -S "${UMBRIEL_SOCKET}" ]]; then
+            printf '  OK       UMBRIEL_SOCKET=%s\n' "$UMBRIEL_SOCKET"
+        elif is_umbriel; then
+            printf '  OK       umbriel IPC responsive\n'
+        else
+            printf '  WARN     umbriel IPC unavailable\n'
+        fi
+        if pgrep -f '[u]mbriel-watcher' >/dev/null 2>&1; then
+            printf '  OK       umbriel-watcher (running)\n'
+        else
+            printf '  WARN     umbriel-watcher (not running)\n'
+        fi
         ;;
     niri)
-        for app in niri noctalia kitty dolphin qt6ct; do check_app "$app"; done
+        for app in niri noctalia python3 kitty dolphin qt6ct; do check_app "$app"; done
         ;;
     hyprland|hypr)
-        for app in Hyprland hyprctl noctalia kitty dolphin qt6ct; do check_app "$app"; done
+        for app in Hyprland hyprctl noctalia python3 kitty dolphin qt6ct; do check_app "$app"; done
         ;;
     *)
         printf 'Usage: desktop-doctor [umbriel|niri|hyprland]\n' >&2
@@ -59,7 +90,26 @@ fi
 case "$target" in
     umbriel)
         printf '\nUmbriel configuration:\n'
-        umbriel config validate || true
+        umbriel config validate --json 2>&1 | python3 -c '
+import json, sys
+raw = sys.stdin.read()
+try:
+    data = json.loads(raw)
+except Exception:
+    print(raw.strip())
+    sys.exit(0)
+diags = data.get("diagnostics") or []
+path = data.get("path", "config.toml")
+if data.get("valid") and not diags:
+    print(f"  OK       {path} (0 diagnostics)")
+else:
+    print(f"  INVALID  {path} ({len(diags)} diagnostics)")
+    for d in diags:
+        sev = str(d.get("severity", "error")).upper()
+        line = d.get("line", "?")
+        msg = d.get("message", "")
+        print(f"    {sev} L{line}: {msg}")
+' || true
         ;;
     niri)
         printf '\nNiri configuration:\n'
@@ -76,12 +126,52 @@ noctalia config validate || true
 printf '\nShell status:\n'
 noctalia msg status || true
 
-printf '\nMonitors:\n'
+printf '\nMonitors & Pipeline:\n'
 case "$target" in
-    umbriel) umbriel outputs || true ;;
+    umbriel)
+        if command -v umbriel-ctl >/dev/null 2>&1 && is_umbriel; then
+            umbriel-ctl status 2>/dev/null | python3 -c '
+import json, sys
+data = json.loads(sys.stdin.read())
+for o in data.get("outputs", []):
+    state = "ON" if o["enabled"] else "OFF"
+    foc = "*" if o["focused"] else " "
+    vrr_mode = o["vrr_mode"]
+    vrr_hw = "on" if o["vrr_active"] else "off"
+    vrr = f"{vrr_mode} (hw:{vrr_hw})"
+    if o["hdr_supported"]:
+        hdr_mode = o["hdr_mode"]
+        hdr_hw = "on" if o["hdr_active"] else "off"
+        hdr = f"{hdr_mode} (hw:{hdr_hw})"
+    else:
+        hdr = "n/a"
+    scanout = "direct" if o["direct_scanout_active"] else (o["direct_scanout_reason"] or "composited")
+    tear = "on" if o["tearing_enabled"] else "off"
+    lbl = o["label"]
+    conn = o["connector"]
+    w, h, hz, bd = o["width"], o["height"], o["refresh_hz"], o["bit_depth"]
+    ws, lay = o["workspace"], o["layout"]
+    print(f" {foc}{lbl:<8} {conn:<6} {state:<3} {w}x{h}@{hz}Hz {bd}b  WS {ws} ({lay})  VRR:{vrr}  HDR:{hdr}  Tear:{tear}  Scanout:{scanout}")
+b = data.get("border_effect")
+c = data.get("cursor_effect")
+s = data.get("screen_effect")
+w_eff = data.get("window_effect")
+am = data.get("anim_move")
+aw = data.get("anim_workspace")
+gs = data.get("game_auto_suspend_effects")
+gd = data.get("game_auto_dnd")
+sp = data.get("scratchpad_hidden")
+print(f"\nEffects & Watcher:\n  border={b}  cursor={c}  screen={s}  window={w_eff}\n  anim_move={am}  anim_workspace={aw}  game_suspend={gs}  game_dnd={gd}  scratchpad_hidden={sp}")
+' || umbriel outputs || true
+        else
+            umbriel outputs || true
+        fi
+        ;;
     niri)    niri msg outputs || true ;;
     hyprland|hypr) hyprctl monitors || true ;;
 esac
 
-printf '\nPress Enter to close.'
-read -r _
+if [[ -t 0 ]]; then
+    printf '\nPress Enter to close.'
+    read -r _ || true
+fi

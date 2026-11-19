@@ -5,13 +5,17 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
+import tomllib
 
 mods = [(64, "Super"), (1, "Shift"), (4, "Ctrl"), (8, "Alt")]
 
 
 def is_niri() -> bool:
+    if not shutil.which("niri"):
+        return False
     sock = os.environ.get("NIRI_SOCKET", "")
     if not sock or not pathlib.Path(sock).is_socket():
         return False
@@ -23,6 +27,11 @@ def is_niri() -> bool:
 
 
 def is_umbriel() -> bool:
+    if not shutil.which("umbriel"):
+        return False
+    sock = os.environ.get("UMBRIEL_SOCKET", "")
+    if sock:
+        return pathlib.Path(sock).is_socket()
     return subprocess.run(
         ["umbriel", "outputs", "-j"],
         stdout=subprocess.DEVNULL,
@@ -68,6 +77,7 @@ UMBRIEL_ACTION_DESCRIPTIONS = {
     "spawn ~/.local/bin/desktop-reload umbriel": "Validate and reload configuration",
     "spawn ~/.local/bin/umbriel-toggle-vrr": "Cycle Variable Refresh Rate (VRR) mode",
     "spawn ~/.local/bin/net-toggle": "Toggle network tuning (CAKE / default)",
+    "spawn ~/.local/bin/desktop-displays toggle portrait": "Toggle portrait monitor safely",
     "config-reload": "Reload Umbriel configuration",
     "output-toggle DP-3": "Toggle portrait monitor (DP-3)",
     "session-quit": "Quit Umbriel session",
@@ -77,15 +87,20 @@ UMBRIEL_ACTION_DESCRIPTIONS = {
     "window-focus-switch-floating": "Switch focus between floating and tiling",
     "window-toggle-fullscreen": "Toggle fullscreen",
     "window-toggle-maximize": "Maximize column",
+    "window-toggle-maximize-to-edges": "Maximize to monitor edges",
+    "window-center": "Center floating window",
     "window-cycle-primary-extent": "Cycle preset column width",
     "column-center": "Center column",
     "window-cycle-secondary-extent": "Cycle preset window height",
     "window-toggle-pinned": "Pin / unpin floating window",
     "column-toggle-tabbed": "Toggle tabbed column display",
+    "column-toggle-tab-bar": "Show / hide tab bar",
+    "column-focus-tab-previous": "Previous tab in column",
+    "column-focus-tab-next": "Next tab in column",
     "window-consume-or-expel-left": "Stack / unstack window left",
     "window-consume-or-expel-right": "Stack / unstack window right",
-    "window-consume-from-right": "Consume window from right into column",
-    "window-consume-right": "Expel window to column on the right",
+    "window-consume-from-right": "Pull right column window into focused column",
+    "window-consume-right": "Stack focused window into column on the right",
     "workspace-set-layout toggle dwindle scrolling master stacking": "Cycle workspace layout (Dwindle/Scroll/Master/Stack)",
     "workspace-set-layout dwindle": "Set workspace layout: Dwindle",
     "workspace-set-layout scrolling": "Set workspace layout: Scrolling",
@@ -96,7 +111,7 @@ UMBRIEL_ACTION_DESCRIPTIONS = {
     "layout-master-count-increase": "Increase Master window count",
     "spawn ~/.local/bin/umbriel-effects border cycle": "Cycle window border style (Solid / Pulse / Audio)",
     "spawn ~/.local/bin/umbriel-effects border toggle": "Toggle animated window border effect on / off",
-    "spawn ~/.local/bin/umbriel-effects cursor cycle": "Cycle mouse cursor effect (Normal / Trail / Glow)",
+    "spawn ~/.local/bin/umbriel-effects cursor cycle": "Cycle mouse cursor effect (Normal / Trail / Ribbon / Glow)",
     "column-move-left": "Move column left (same monitor)",
     "column-move-right": "Move column right (same monitor)",
     "column-move-to-output-left": "Move column to monitor left",
@@ -107,6 +122,8 @@ UMBRIEL_ACTION_DESCRIPTIONS = {
     "column-move-to-workspace-previous": "Move column to previous workspace",
     "output-focus-next": "Focus next monitor",
     "window-move-to-output-next": "Move window to next monitor",
+    "workspace-move-to-output-next": "Move workspace to next monitor",
+    "workspace-swap-active-output-next": "Swap active workspace with next monitor",
     "window-modify-primary-extent -0.1": "Shrink column width (-10%)",
     "window-modify-primary-extent 0.1": "Grow column width (+10%)",
     "window-modify-secondary-extent -0.1": "Shrink window height (-10%)",
@@ -142,6 +159,28 @@ UMBRIEL_ACTION_DESCRIPTIONS = {
     "window-move-to-workspace-previous": "Move window to previous workspace",
     "window-focus-right": "Focus right",
     "window-focus-left": "Focus left",
+    "scratchpad-toggle quick": "Show / hide quick scratchpad",
+    "window-toggle-scratchpad quick": "Send / restore window in quick scratchpad",
+    "scratchpad-window-show-next quick": "Cycle quick scratchpad windows",
+    "scratchpad-toggle term": "Toggle floating terminal scratchpad",
+    "submap window": "Enter Window / Snap / Tab mode",
+    "submap cast": "Enter Screencast control mode",
+    "submap reset": "Exit current submap mode",
+    "window-set-region left": "Snap window to left half",
+    "window-set-region right": "Snap window to right half",
+    "window-set-region top": "Snap window to top half",
+    "window-set-region bottom": "Snap window to bottom half",
+    "window-set-region top_left": "Snap window to top-left quarter",
+    "window-set-region top_right": "Snap window to top-right quarter",
+    "window-set-region bottom_left": "Snap window to bottom-left quarter",
+    "window-set-region bottom_right": "Snap window to bottom-right quarter",
+    "window-clear-region": "Clear snapped window region",
+    "screencast-set-output": "Share focused monitor",
+    "screencast-set-window": "Share focused window",
+    "screencast-follow-window": "Screencast: follow focused window",
+    "screencast-follow-output": "Screencast: follow focused monitor",
+    "screencast-follow-stop": "Screencast: lock current target",
+    "screencast-clear": "Pause / clear active screencast",
 }
 
 
@@ -236,6 +275,12 @@ NIRI_ACTION_DESCRIPTIONS = {
 
 
 def format_niri_key(combo: str) -> str:
+    m = re.match(r"^submap\[([^\]]+)\],(.+)$", combo)
+    if m:
+        sub_name, rest = m.group(1), m.group(2)
+        parts = rest.split("+")
+        key_str = " + ".join("Super" if part == "Mod" else part for part in parts)
+        return f"[{sub_name}] {key_str}"
     parts = combo.split("+")
     return " + ".join("Super" if part == "Mod" else part for part in parts)
 
@@ -307,6 +352,8 @@ def describe_umbriel_action(action: str) -> str:
         return "Validate and reload configuration"
     if "net-toggle" in action:
         return "Toggle network tuning (CAKE / default)"
+    if "desktop-displays" in action and "portrait" in action:
+        return "Toggle portrait monitor safely"
     m = re.match(r"^workspace-switch (\d+)$", action)
     if m:
         return f"Focus workspace {m.group(1)}"
@@ -319,23 +366,53 @@ def describe_umbriel_action(action: str) -> str:
     return action
 
 
+def _load_umbriel_keybinds(path: pathlib.Path, seen: set[pathlib.Path]) -> dict[str, object]:
+    try:
+        resolved = path.expanduser().resolve()
+    except OSError:
+        return {}
+    if resolved in seen or not resolved.is_file():
+        return {}
+    seen.add(resolved)
+    data = tomllib.loads(resolved.read_text(encoding="utf-8"))
+    keybinds: dict[str, object] = {}
+
+    include = data.get("include", {})
+    if isinstance(include, dict):
+        for rel in include.get("files", []):
+            if isinstance(rel, str):
+                inc = pathlib.Path(os.path.expandvars(rel)).expanduser()
+                if not inc.is_absolute():
+                    inc = resolved.parent / inc
+                keybinds.update(_load_umbriel_keybinds(inc, seen))
+        opt = include.get("optional", {})
+        if isinstance(opt, dict):
+            for rel in opt.get("files", []):
+                if isinstance(rel, str):
+                    inc = pathlib.Path(os.path.expandvars(rel)).expanduser()
+                    if not inc.is_absolute():
+                        inc = resolved.parent / inc
+                    keybinds.update(_load_umbriel_keybinds(inc, seen))
+
+    kb = data.get("keybinds", {})
+    if isinstance(kb, dict):
+        keybinds.update(kb)
+    return keybinds
+
+
 def get_umbriel_rows() -> list[str]:
     config_path = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", pathlib.Path.home() / ".config")) / "umbriel" / "config.toml"
-    text = config_path.read_text(encoding="utf-8")
-    m = re.search(r"(?m)^\[keybinds\]\s*(.*?)\Z", text, re.DOTALL)
-    if not m:
-        return []
+    keybinds = _load_umbriel_keybinds(config_path, set())
     rows = []
-    str_re = re.compile(r'^\s*"([^"]+)"\s*=\s*"([^"]+)"\s*$')
-    tbl_re = re.compile(r'^\s*"([^"]+)"\s*=\s*\{.*?\baction\s*=\s*"([^"]+)".*\}\s*$')
-    for line in m.group(1).splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
+    for combo, val in keybinds.items():
+        if isinstance(val, str):
+            action = val
+        elif isinstance(val, dict):
+            action = str(val.get("action") or val.get("release") or "")
+        else:
             continue
-        sm = str_re.match(line) or tbl_re.match(line)
-        if not sm:
+        if not action:
             continue
-        combo, action = sm.group(1), sm.group(2)
         rows.append(f"{format_niri_key(combo):<32}  {describe_umbriel_action(action)}")
     return rows
 
@@ -374,8 +451,16 @@ def main() -> int:
             rows = get_niri_rows()
         else:
             rows = get_hyprland_rows()
-        subprocess.run(["noctalia", "dmenu", "--prompt", "Keyboard shortcuts"], input="\n".join(rows), text=True, check=True)
-    except (subprocess.CalledProcessError, json.JSONDecodeError, OSError) as error:
+        result = subprocess.run(
+            ["noctalia", "dmenu", "--prompt", "Keyboard shortcuts"],
+            input="\n".join(rows),
+            text=True,
+            check=False,
+        )
+        # Exit code 1 indicates user cancelled dmenu with Escape.
+        if result.returncode not in (0, 1):
+            return result.returncode
+    except (subprocess.CalledProcessError, json.JSONDecodeError, tomllib.TOMLDecodeError, OSError) as error:
         print(f"Cannot read keyboard shortcuts: {error}", file=sys.stderr)
         return 1
     return 0

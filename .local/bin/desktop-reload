@@ -2,11 +2,18 @@
 set -euo pipefail
 
 is_niri() {
-    [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] && niri msg version >/dev/null 2>&1
+    command -v niri >/dev/null 2>&1 && [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] && niri msg version >/dev/null 2>&1
 }
 
 is_umbriel() {
-    command -v umbriel >/dev/null 2>&1 && umbriel outputs -j >/dev/null 2>&1
+    if ! command -v umbriel >/dev/null 2>&1; then
+        return 1
+    fi
+    if [[ -n "${UMBRIEL_SOCKET:-}" ]]; then
+        [[ -S "${UMBRIEL_SOCKET}" ]]
+        return
+    fi
+    umbriel outputs -j >/dev/null 2>&1
 }
 
 detect_compositor() {
@@ -19,19 +26,58 @@ detect_compositor() {
     fi
 }
 
+notify_msg() {
+    local title="$1"
+    local body="$2"
+    if command -v noctalia >/dev/null 2>&1 && noctalia msg notification-show "$title" "$body" >/dev/null 2>&1; then
+        return 0
+    fi
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send -u normal "$title" "$body" >/dev/null 2>&1 || true
+    fi
+}
+
+validate_umbriel() {
+    local json_out
+    if ! json_out=$(umbriel config validate --json 2>&1); then
+        printf '%s\n' "$json_out" >&2
+        notify_msg "Umbriel configuration needs attention" "$json_out"
+        return 1
+    fi
+    local diag_report
+    if ! diag_report=$(python3 -c '
+import json, sys
+data = json.loads(sys.stdin.read())
+diags = data.get("diagnostics") or []
+if not data.get("valid", False) or diags:
+    for d in diags:
+        sev = str(d.get("severity", "error")).upper()
+        fname = d.get("file", "")
+        line = d.get("line", "?")
+        msg = d.get("message", "")
+        print(f"{sev} {fname}:{line}: {msg}")
+    sys.exit(1)
+' <<< "$json_out" 2>&1); then
+        printf '%s\n' "$diag_report" >&2
+        notify_msg "Umbriel configuration needs attention" "$diag_report"
+        return 1
+    fi
+}
+
 reload_desktop() {
     local label="$1"
     shift
     local report
 
     if ! report=$(noctalia config validate 2>&1) || [[ "$report" == *"WARN "* ]]; then
-        noctalia msg notification-show "Noctalia configuration needs attention" "$report"
+        printf '%s\n' "$report" >&2
+        notify_msg "Noctalia configuration needs attention" "$report"
         exit 1
     fi
 
     "$@"
     noctalia msg config-reload
-    noctalia msg notification-show "Desktop" "$label configuration reloaded."
+    notify_msg "Desktop" "$label configuration reloaded."
 }
 
 target="${1:-$(detect_compositor)}"
@@ -39,22 +85,21 @@ hypr_root="${HYPR_CONFIG_ROOT:-${XDG_CONFIG_HOME:-$HOME/.config}/hypr}"
 
 case "$target" in
     umbriel)
-        if ! report=$(umbriel config validate 2>&1); then
-            noctalia msg notification-show "Umbriel configuration needs attention" "$report"
-            exit 1
-        fi
+        validate_umbriel || exit 1
         reload_desktop "Umbriel" umbriel msg config-reload
         ;;
     niri)
         if ! report=$(niri validate 2>&1); then
-            noctalia msg notification-show "Niri configuration needs attention" "$report"
+            printf '%s\n' "$report" >&2
+            notify_msg "Niri configuration needs attention" "$report"
             exit 1
         fi
         reload_desktop "Niri" niri msg action load-config-file
         ;;
     hyprland|hypr)
         if ! report=$(Hyprland --verify-config -c "$hypr_root/hyprland.lua" 2>&1); then
-            noctalia msg notification-show "Hyprland configuration needs attention" "$report"
+            printf '%s\n' "$report" >&2
+            notify_msg "Hyprland configuration needs attention" "$report"
             exit 1
         fi
         reload_desktop "Hyprland" hyprctl reload

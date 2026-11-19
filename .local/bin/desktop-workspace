@@ -5,7 +5,9 @@ import fcntl
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
+import sys
 
 
 def query(command):
@@ -13,6 +15,8 @@ def query(command):
 
 
 def is_niri():
+    if not shutil.which("niri"):
+        return False
     sock = os.environ.get("NIRI_SOCKET")
     if not sock or not Path(sock).is_socket():
         return False
@@ -40,6 +44,11 @@ def create_workspace_niri(monitor=None):
 
 
 def is_umbriel():
+    if not shutil.which("umbriel"):
+        return False
+    sock = os.environ.get("UMBRIEL_SOCKET", "")
+    if sock:
+        return Path(sock).is_socket()
     return subprocess.run(
         ["umbriel", "outputs", "-j"],
         stdout=subprocess.DEVNULL,
@@ -50,36 +59,52 @@ def is_umbriel():
 def create_workspace_umbriel(monitor=None):
     outputs = json.loads(subprocess.check_output(["umbriel", "outputs", "-j"], text=True))
     workspaces = json.loads(subprocess.check_output(["umbriel", "workspaces", "-j"], text=True))
+    enabled_outputs = [o for o in outputs if isinstance(o, dict) and o.get("enabled")]
+    if not enabled_outputs:
+        raise RuntimeError("No enabled Umbriel output available")
+
     target_name = None
     if monitor:
-        for info in outputs:
-            desc = f"{info.get('make', '')} {info.get('model', '')} {info.get('description', '')}"
+        for info in enabled_outputs:
+            desc = f"{info.get('make', '')} {info.get('model', '')} {info.get('description', '')} {info.get('config_name', '')}"
             if info.get("name") == monitor or monitor in desc:
                 target_name = info.get("name")
                 break
-    if not target_name:
-        focused = next((o for o in outputs if o.get("focused")), None) or (outputs[0] if outputs else None)
-        if focused:
-            target_name = focused.get("name")
-    used = {w.get("index", 0) for w in workspaces if w.get("occupied") or w.get("active")}
-    number = 1
-    while number in used:
-        number += 1
-    cmd = ["umbriel", "msg", "workspace-switch", str(number)]
-    if target_name:
-        cmd.extend(["--output", target_name])
+        if not target_name:
+            raise RuntimeError(f"Monitor '{monitor}' is disconnected or disabled")
+    else:
+        focused = next((o for o in enabled_outputs if o.get("focused")), enabled_outputs[0])
+        target_name = focused.get("name")
+
+    out_workspaces = [w for w in workspaces if isinstance(w, dict) and w.get("output") == target_name]
+    used = {int(w.get("index", 0)) for w in out_workspaces if w.get("occupied") or w.get("active")}
+    available_indices = sorted({int(w.get("index", 0)) for w in out_workspaces if int(w.get("index", 0)) > 0})
+
+    if available_indices:
+        # Prefer unused scrolling workspaces (2..N) so clicking '+' doesn't jump back to empty Dwindle WS 1.
+        unused = [idx for idx in available_indices if idx not in used]
+        if not unused:
+            raise RuntimeError(f"All workspaces on {target_name} are already occupied")
+        number = next((idx for idx in unused if idx >= 2), unused[0])
+    else:
+        number = 2
+        while number in used:
+            number += 1
+
+    cmd = ["umbriel", "msg", "workspace-switch", str(number), "--output", target_name]
     subprocess.run(cmd, check=True)
     return number
 
 
 def create_workspace(monitor=None):
-    if is_umbriel():
-        return create_workspace_umbriel(monitor)
-    if is_niri():
-        return create_workspace_niri(monitor)
     runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+    runtime.mkdir(parents=True, exist_ok=True)
     with (runtime / "desktop-workspace.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
+        if is_umbriel():
+            return create_workspace_umbriel(monitor)
+        if is_niri():
+            return create_workspace_niri(monitor)
         monitors = query("monitors")
         target = next((m for m in monitors if m["name"] == monitor or (monitor and monitor in m.get("description", ""))), None) if monitor else None
         target = target or next((m for m in monitors if m["focused"]), None) or next(iter(monitors), None)
@@ -102,4 +127,8 @@ if __name__ == "__main__":
     parser.add_argument("action", choices=["new"])
     parser.add_argument("--monitor", help="Connector or hardware description of the bar monitor")
     arguments = parser.parse_args()
-    create_workspace(arguments.monitor)
+    try:
+        create_workspace(arguments.monitor)
+    except (RuntimeError, OSError, subprocess.SubprocessError, ValueError) as error:
+        print(f"desktop-workspace: {error}", file=sys.stderr)
+        sys.exit(1)
