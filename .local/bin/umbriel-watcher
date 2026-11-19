@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+"""Event-driven Umbriel watcher: suspends persistent shaders (and optional DND) during fullscreen games
+to maximize Direct Scanout and reduce GPU overhead, without ever overriding your VRR toggle."""
+from __future__ import annotations
+
+import fcntl
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import signal
+import subprocess
+import sys
+import time
+from typing import Any
+
+STATE_FILE = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "umbriel" / "state.json"
+RUNTIME_DIR = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+LOCK_FILE = RUNTIME_DIR / "umbriel-watcher.lock"
+
+GAME_APP_RE = re.compile(r"^(steam_app_.*|gamescope|cs2|dota2|hl2_linux|factorio)$", re.IGNORECASE)
+
+
+def umbriel_socket_alive() -> bool:
+    sock = os.environ.get("UMBRIEL_SOCKET", "")
+    if sock:
+        return Path(sock).is_socket()
+    return shutil.which("umbriel") is not None
+
+
+def load_state() -> dict[str, Any]:
+    if not STATE_FILE.is_file():
+        return {"game_auto_suspend_effects": True, "game_auto_dnd": False}
+    try:
+        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def config_get(key: str) -> str:
+    res = subprocess.run(["umbriel", "config", "get", key], capture_output=True, text=True, check=False)
+    return res.stdout.strip() if res.returncode == 0 else ""
+
+
+def config_set_str(key: str, value: str) -> None:
+    subprocess.run(["umbriel", "config", "set", key, json.dumps(value)], capture_output=True, text=True, check=False)
+
+
+def noctalia_dnd_active() -> bool | None:
+    if not shutil.which("noctalia"):
+        return None
+    res = subprocess.run(["noctalia", "msg", "notification-dnd-status"], capture_output=True, text=True, check=False)
+    if res.returncode != 0:
+        return None
+    out = res.stdout.strip().lower()
+    if "on" in out or "true" in out or "enabled" in out:
+        return True
+    if "off" in out or "false" in out or "disabled" in out:
+        return False
+    return None
+
+
+def noctalia_dnd_set(enabled: bool) -> None:
+    if not shutil.which("noctalia"):
+        return
+    subprocess.run(
+        ["noctalia", "msg", "notification-dnd-set", "on" if enabled else "off"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+
+
+def is_fullscreen_game(win: dict[str, Any]) -> bool:
+    if not win.get("fullscreen") or not win.get("visible"):
+        return False
+    if win.get("content_type") == "game":
+        return True
+    app_id = str(win.get("app_id") or "")
+    return bool(GAME_APP_RE.match(app_id))
+
+
+class GameModeController:
+    def __init__(self) -> None:
+        self.game_active = False
+        self.suspended_slots: dict[str, str] = {}
+        self.forced_dnd = False
+
+    def enter_game_mode(self) -> None:
+        if self.game_active:
+            return
+        state = load_state()
+        self.game_active = True
+
+        if state.get("game_auto_suspend_effects", True):
+            for state_key, cfg_key in (
+                ("border", "effects.border"),
+                ("cursor", "effects.cursor"),
+                ("screen", "effects.screen"),
+            ):
+                live = config_get(cfg_key)
+                if live:
+                    self.suspended_slots[cfg_key] = state_key
+                    config_set_str(cfg_key, "")
+
+        if state.get("game_auto_dnd", False):
+            cur_dnd = noctalia_dnd_active()
+            if cur_dnd is False:
+                noctalia_dnd_set(True)
+                self.forced_dnd = True
+
+    def leave_game_mode(self) -> None:
+        if not self.game_active:
+            return
+        self.game_active = False
+        state = load_state()
+
+        for cfg_key, state_key in list(self.suspended_slots.items()):
+            # Restore from user's persistent desired state so mid-game manual edits win.
+            desired = str(state.get(state_key) or "")
+            if desired and config_get(cfg_key) == "":
+                config_set_str(cfg_key, desired)
+        self.suspended_slots.clear()
+
+        if self.forced_dnd:
+            noctalia_dnd_set(False)
+            self.forced_dnd = False
+
+
+def main() -> int:
+    if not shutil.which("umbriel"):
+        return 1
+
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    lock_handle = LOCK_FILE.open("w", encoding="utf-8")
+    try:
+        fcntl.flock(lock_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        # Another watcher instance is already running.
+        return 0
+    lock_handle.write(f"{os.getpid()}\n")
+    lock_handle.flush()
+
+    controller = GameModeController()
+    stop_flag = False
+
+    def handle_signal(_signum: int, _frame: Any) -> None:
+        nonlocal stop_flag
+        stop_flag = True
+
+    signal.signal(signal.SIGTERM, handle_signal)
+    signal.signal(signal.SIGINT, handle_signal)
+
+    try:
+        while not stop_flag and umbriel_socket_alive():
+            proc = subprocess.Popen(
+                ["umbriel", "subscribe", "windows"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                bufsize=1,
+            )
+            assert proc.stdout is not None
+            try:
+                for line in proc.stdout:
+                    if stop_flag:
+                        break
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        payload = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(payload, dict) and payload.get("event") == "windows":
+                        windows = payload.get("data")
+                    elif isinstance(payload, list):
+                        windows = payload
+                    else:
+                        continue
+                    if not isinstance(windows, list):
+                        continue
+                    has_game = any(isinstance(w, dict) and is_fullscreen_game(w) for w in windows)
+                    if has_game:
+                        controller.enter_game_mode()
+                    else:
+                        controller.leave_game_mode()
+            finally:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+            if not stop_flag and umbriel_socket_alive():
+                time.sleep(1.0)
+    finally:
+        controller.leave_game_mode()
+        try:
+            fcntl.flock(lock_handle, fcntl.LOCK_UN)
+            lock_handle.close()
+        except OSError:
+            pass
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

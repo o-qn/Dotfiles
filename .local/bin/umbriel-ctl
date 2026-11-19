@@ -1,0 +1,1138 @@
+#!/usr/bin/env python3
+"""Unified, zero-reload runtime controller and state manager for Umbriel."""
+from __future__ import annotations
+
+import argparse
+from contextlib import contextmanager
+import fcntl
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import tomllib
+from typing import Any
+
+CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "umbriel"
+CONFIG_FILE = CONFIG_DIR / "config.toml"
+STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "umbriel"
+STATE_FILE = STATE_DIR / "state.json"
+RUNTIME_DIR = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+LOCK_FILE = RUNTIME_DIR / "umbriel-ctl.lock"
+
+DISPLAY_ROLES: tuple[tuple[str, str, str], ...] = (
+    ("main", "Main", "G2721P"),
+    ("portrait", "Portrait", "Sceptre L24"),
+)
+
+LAYOUTS = ("dwindle", "scrolling", "master", "stacking")
+VRR_MODES = ("fullscreen", "always", "disabled")
+VRR_ALIASES = {
+    "fullscreen": "fullscreen",
+    "auto": "fullscreen",
+    "always": "always",
+    "on": "always",
+    "disabled": "disabled",
+    "off": "disabled",
+}
+HDR_MODES = ("off", "auto", "fullscreen", "on")
+BORDER_MODES = ("none", "pulse", "audio")
+CURSOR_MODES = ("none", "trail", "trail-path", "glow")
+SCREEN_MODES = ("none", "vignette")
+WINDOW_MODES = ("none", "scanlines")
+ANIM_MOVE_MODES = ("none", "squash")
+ANIM_WS_MODES = ("slide", "wipe")
+
+DEFAULT_STATE: dict[str, Any] = {
+    "vrr": {},
+    "hdr": {},
+    "sdr_white": {},
+    "tearing": {},
+    "border": "",
+    "cursor": "",
+    "screen": "",
+    "anim_move": "",
+    "anim_workspace": "slide",
+    "game_auto_suspend_effects": True,
+    "game_auto_dnd": False,
+}
+
+
+class UmbrielError(RuntimeError):
+    """Raised when an Umbriel IPC or validation operation fails."""
+
+
+def is_umbriel_running() -> bool:
+    if not shutil.which("umbriel"):
+        return False
+    sock = os.environ.get("UMBRIEL_SOCKET", "")
+    if sock:
+        return Path(sock).is_socket()
+    try:
+        res = subprocess.run(
+            ["umbriel", "outputs", "-j"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        return res.returncode == 0
+    except OSError:
+        return False
+
+
+@contextmanager
+def state_lock():
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    with LOCK_FILE.open("w", encoding="utf-8") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+def run_umbriel(args: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
+    if not shutil.which("umbriel"):
+        raise UmbrielError("umbriel binary not found in PATH")
+    try:
+        proc = subprocess.run(
+            ["umbriel", *args],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise UmbrielError(f"failed to execute umbriel: {exc}") from exc
+    if check and proc.returncode != 0:
+        msg = (proc.stderr or proc.stdout).strip() or f"umbriel {' '.join(args)} exited {proc.returncode}"
+        raise UmbrielError(msg)
+    return proc
+
+
+def query_json(args: list[str], *, allow_fail: bool = False) -> Any:
+    proc = run_umbriel([*args, "-j"], check=not allow_fail)
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return None
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        if allow_fail:
+            return None
+        raise UmbrielError(f"invalid JSON from umbriel {' '.join(args)}: {exc}") from exc
+
+
+def settle() -> None:
+    run_umbriel(["settle"], check=False)
+
+
+def toml_literal(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    return json.dumps(str(value))
+
+
+def output_config_key(connector: str, field: str) -> str:
+    return f'output."{connector}".{field}'
+
+
+def config_get(key: str, default: str | None = None) -> str | None:
+    proc = run_umbriel(["config", "get", key], check=False)
+    if proc.returncode != 0:
+        return default
+    return proc.stdout.strip()
+
+
+def config_set(key: str, value: Any) -> None:
+    run_umbriel(["config", "set", key, toml_literal(value)], check=True)
+
+
+def notify(title: str, body: str) -> None:
+    if shutil.which("noctalia"):
+        res = subprocess.run(
+            ["noctalia", "msg", "notification-show", title, body],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if res.returncode == 0:
+            return
+    if shutil.which("notify-send"):
+        subprocess.run(
+            ["notify-send", "-u", "low", "-t", "1800", title, body],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+
+
+def _deep_merge(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
+    for key, val in incoming.items():
+        if key in base and isinstance(base[key], dict) and isinstance(val, dict):
+            _deep_merge(base[key], val)
+        elif key in base and isinstance(base[key], list) and isinstance(val, list):
+            base[key] = [*base[key], *val]
+        else:
+            base[key] = val
+    return base
+
+
+def load_umbriel_config(path: Path = CONFIG_FILE, _seen: set[Path] | None = None) -> dict[str, Any]:
+    seen = _seen if _seen is not None else set()
+    try:
+        resolved = path.expanduser().resolve()
+    except OSError:
+        return {}
+    if resolved in seen or not resolved.is_file():
+        return {}
+    seen.add(resolved)
+    try:
+        data = tomllib.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+
+    merged: dict[str, Any] = {}
+    include = data.get("include", {})
+    if isinstance(include, dict):
+        for rel in include.get("files", []):
+            if isinstance(rel, str):
+                inc_path = Path(os.path.expandvars(rel)).expanduser()
+                if not inc_path.is_absolute():
+                    inc_path = resolved.parent / inc_path
+                _deep_merge(merged, load_umbriel_config(inc_path, seen))
+        opt = include.get("optional", {})
+        if isinstance(opt, dict):
+            for rel in opt.get("files", []):
+                if isinstance(rel, str):
+                    inc_path = Path(os.path.expandvars(rel)).expanduser()
+                    if not inc_path.is_absolute():
+                        inc_path = resolved.parent / inc_path
+                    _deep_merge(merged, load_umbriel_config(inc_path, seen))
+    _deep_merge(merged, data)
+    return merged
+
+
+def workspace_default_layout(cfg: dict[str, Any], output_name: str, config_name: str, ws_index: int) -> str:
+    # 1. Exact workspace+output match, then workspace index match
+    ws_rules = cfg.get("workspace", [])
+    if isinstance(ws_rules, list):
+        fallback_match = None
+        for entry in ws_rules:
+            if not isinstance(entry, dict) or entry.get("index") != ws_index:
+                continue
+            mode = (entry.get("layout") or {}).get("mode") if isinstance(entry.get("layout"), dict) else None
+            if not mode:
+                continue
+            rule_out = entry.get("output")
+            if rule_out in (output_name, config_name):
+                return str(mode)
+            if not rule_out:
+                fallback_match = str(mode)
+        if fallback_match:
+            return fallback_match
+
+    # 2. Per-output layout.mode
+    out_cfg = cfg.get("output", {})
+    if isinstance(out_cfg, dict):
+        for candidate in (config_name, output_name):
+            if candidate and isinstance(out_cfg.get(candidate), dict):
+                out_layout = out_cfg[candidate].get("layout")
+                if isinstance(out_layout, dict) and out_layout.get("mode"):
+                    return str(out_layout["mode"])
+
+    # 3. Global [layout] mode
+    layout_cfg = cfg.get("layout", {})
+    if isinstance(layout_cfg, dict) and layout_cfg.get("mode"):
+        return str(layout_cfg["mode"])
+    return "scrolling"
+
+
+def load_state() -> dict[str, Any]:
+    state = json.loads(json.dumps(DEFAULT_STATE))
+    if not STATE_FILE.is_file():
+        return state
+    try:
+        raw = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return state
+    if isinstance(raw, dict):
+        for key, default_val in DEFAULT_STATE.items():
+            if key in raw and type(raw[key]) is type(default_val):
+                state[key] = raw[key]
+    return state
+
+
+def save_state(state: dict[str, Any]) -> None:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=".state.", suffix=".tmp", dir=str(STATE_DIR))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(state, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_name, STATE_FILE)
+    except Exception:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
+
+
+def classify_output(out: dict[str, Any]) -> tuple[str, str]:
+    haystack = f"{out.get('make', '')} {out.get('model', '')} {out.get('description', '')} {out.get('config_name', '')}"
+    for role, label, needle in DISPLAY_ROLES:
+        if needle in haystack:
+            return role, label
+    transform = str(out.get("transform") or "normal")
+    if "90" in transform or "270" in transform:
+        return "portrait", "Portrait"
+    name = str(out.get("name") or "")
+    model = str(out.get("model") or name)
+    return name, model
+
+
+def output_mode_info(out: dict[str, Any]) -> tuple[int, int, int]:
+    modes = out.get("modes") or []
+    current = next((m for m in modes if isinstance(m, dict) and m.get("current")), None)
+    if current:
+        return (
+            int(current.get("width") or 0),
+            int(current.get("height") or 0),
+            int(round(int(current.get("refresh_mhz") or 0) / 1000.0)),
+        )
+    logical = out.get("logical_size") or {}
+    return int(logical.get("width") or 0), int(logical.get("height") or 0), 0
+
+
+def resolve_output(
+    outputs: list[dict[str, Any]],
+    selector: str | None = None,
+    *,
+    prefer_role: str | None = None,
+    require_enabled: bool = False,
+) -> dict[str, Any]:
+    candidates = [o for o in outputs if isinstance(o, dict)]
+    if not candidates:
+        raise UmbrielError("no outputs reported by Umbriel")
+
+    def matches(out: dict[str, Any], sel: str) -> bool:
+        role, label = classify_output(out)
+        haystack = f"{out.get('make', '')} {out.get('model', '')} {out.get('description', '')} {out.get('config_name', '')}"
+        return (
+            out.get("name") == sel
+            or role == sel
+            or label.lower() == sel.lower()
+            or sel in haystack
+        )
+
+    matched: dict[str, Any] | None = None
+    if selector:
+        matched = next((o for o in candidates if matches(o, selector)), None)
+        if not matched:
+            raise UmbrielError(f"output '{selector}' not found")
+    else:
+        if prefer_role:
+            matched = next(
+                (o for o in candidates if classify_output(o)[0] == prefer_role and (not require_enabled or o.get("enabled"))),
+                None,
+            )
+        if not matched:
+            matched = next((o for o in candidates if o.get("focused") and o.get("enabled")), None)
+        if not matched:
+            matched = next((o for o in candidates if o.get("enabled")), candidates[0])
+
+    if require_enabled and not matched.get("enabled"):
+        raise UmbrielError(f"output '{matched.get('name')}' is currently disabled")
+    return matched
+
+
+def reset_runtime_border_effects() -> None:
+    effects_data = query_json(["effects"], allow_fail=True)
+    if isinstance(effects_data, dict):
+        for owner in effects_data.get("owners", []):
+            if isinstance(owner, dict) and owner.get("type") == "window":
+                wid = owner.get("id")
+                slot = (owner.get("slots") or {}).get("border", {})
+                if wid and slot.get("source") == "runtime":
+                    run_umbriel(["msg", "effect-border-reset", str(wid)], check=False)
+
+
+def reset_runtime_cursor_effect() -> None:
+    run_umbriel(["msg", "effect-cursor-reset"], check=False)
+
+
+def reset_runtime_screen_effects(outputs: list[dict[str, Any]] | None = None) -> None:
+    effects_data = query_json(["effects"], allow_fail=True)
+    if isinstance(effects_data, dict):
+        for owner in effects_data.get("owners", []):
+            if isinstance(owner, dict) and owner.get("type") == "output":
+                name = owner.get("name")
+                slot = (owner.get("slots") or {}).get("screen", {})
+                if name and slot.get("source") == "runtime":
+                    run_umbriel(["msg", "effect-screen-reset", str(name)], check=False)
+    elif outputs:
+        for out in outputs:
+            if out.get("name"):
+                run_umbriel(["msg", "effect-screen-reset", str(out["name"])], check=False)
+
+
+def get_status(selected_selector: str | None = None) -> dict[str, Any]:
+    outputs = query_json(["outputs"])
+    workspaces = query_json(["workspaces"])
+    if not isinstance(outputs, list) or not isinstance(workspaces, list):
+        raise UmbrielError("failed to query Umbriel outputs/workspaces")
+
+    color_data = query_json(["color"], allow_fail=True) or {}
+    tearing_data = query_json(["tearing"], allow_fail=True) or {}
+    effects_data = query_json(["effects"], allow_fail=True) or {}
+    windows_data = query_json(["windows"], allow_fail=True) or []
+    submap_data = query_json(["submap"], allow_fail=True)
+    cfg = load_umbriel_config()
+    state = load_state()
+
+    color_by_name = {
+        o.get("name"): o
+        for o in (color_data.get("outputs") or [])
+        if isinstance(o, dict) and o.get("name")
+    }
+    tearing_by_name = {
+        o.get("name"): o
+        for o in (tearing_data.get("outputs") or [])
+        if isinstance(o, dict) and o.get("name")
+    }
+
+    active_ws_by_out: dict[str, dict[str, Any]] = {}
+    for ws in workspaces:
+        if isinstance(ws, dict) and ws.get("active") and ws.get("output"):
+            active_ws_by_out[str(ws["output"])] = ws
+
+    output_summaries: list[dict[str, Any]] = []
+    for out in outputs:
+        if not isinstance(out, dict):
+            continue
+        name = str(out.get("name") or "")
+        role, label = classify_output(out)
+        width, height, refresh_hz = output_mode_info(out)
+        ws = active_ws_by_out.get(name)
+        ws_index = int(ws.get("index") or 1) if ws else 1
+        ws_name = str(ws.get("name") or ws_index) if ws else "1"
+        default_layout = workspace_default_layout(cfg, name, str(out.get("config_name") or ""), ws_index)
+        layout = str(ws.get("layout") or default_layout) if ws else default_layout
+
+        vrr_mode = config_get(output_config_key(name, "vrr"))
+        if vrr_mode not in VRR_MODES:
+            vrr_mode = state["vrr"].get(role) or state["vrr"].get(name) or "disabled"
+
+        cinfo = color_by_name.get(name, {})
+        tinfo = tearing_by_name.get(name, {})
+        ds = out.get("direct_scanout") or {}
+        hdr_supported = bool(
+            "BT.2020" in (cinfo.get("supported_primaries") or [])
+            and "PQ" in (cinfo.get("supported_transfer_functions") or [])
+        )
+        hdr_mode = str(cinfo.get("hdr_mode") or config_get(output_config_key(name, "hdr")) or "off")
+        tearing_cfg = config_get(output_config_key(name, "tearing"))
+        tearing_enabled = (
+            tearing_cfg == "true"
+            if tearing_cfg in ("true", "false")
+            else bool(tinfo.get("allowed") or state["tearing"].get(role) or state["tearing"].get(name))
+        )
+
+        output_summaries.append({
+            "role": role,
+            "label": label,
+            "connector": name,
+            "config_name": str(out.get("config_name") or ""),
+            "enabled": bool(out.get("enabled")),
+            "focused": bool(out.get("focused")),
+            "width": width,
+            "height": height,
+            "refresh_hz": refresh_hz,
+            "workspace": ws_name,
+            "workspace_index": ws_index,
+            "layout": layout,
+            "layout_default": default_layout,
+            "layout_override": bool(ws.get("layout_override")) if ws else False,
+            "vrr_mode": vrr_mode,
+            "vrr_active": bool(out.get("adaptive_sync")),
+            "hdr_supported": hdr_supported,
+            "hdr_mode": hdr_mode,
+            "hdr_active": bool(out.get("hdr_active") or cinfo.get("hdr_active")),
+            "bit_depth": int(cinfo.get("bit_depth") or 8),
+            "bit_depth_active": bool(cinfo.get("bit_depth_active")),
+            "sdr_white": float(cinfo.get("sdr_white") or 203.0),
+            "tearing_enabled": tearing_enabled,
+            "direct_scanout_active": bool(ds.get("active")),
+            "direct_scanout_reason": str(ds.get("reason") or ""),
+        })
+
+    # Choose the selected output (explicit selector -> focused -> main -> first)
+    selected_raw = resolve_output(outputs, selected_selector)
+    selected_name = str(selected_raw.get("name") or "")
+    selected = next(
+        (o for o in output_summaries if o["connector"] == selected_name),
+        output_summaries[0],
+    )
+
+    border_live = config_get("effects.border", "") or ""
+    cursor_live = config_get("effects.cursor", "") or ""
+    screen_live = config_get("effects.screen", "") or ""
+    anim_move_live = config_get("animation.windows_move.effect", "") or ""
+    anim_ws_effect = config_get("animation.workspaces.effect", "") or ""
+    anim_ws_style = config_get("animation.workspaces.style", "slide") or "slide"
+    anim_ws_mode = "wipe" if (anim_ws_style == "reveal" and anim_ws_effect == "workspace_wipe") else "slide"
+
+    # Focused window runtime window_effect (e.g. scanlines)
+    focused_win = next((w for w in windows_data if isinstance(w, dict) and w.get("focused") and w.get("visible")), None)
+    focused_win_effect = "none"
+    if focused_win:
+        we = focused_win.get("window_effect") or {}
+        if not we.get("suppressed") and we.get("name"):
+            focused_win_effect = str(we["name"])
+    elif isinstance(effects_data, dict):
+        cursor_slot = effects_data.get("cursor") or {}
+        if not cursor_live and cursor_slot.get("name") and not cursor_slot.get("suppressed"):
+            cursor_live = str(cursor_slot["name"])
+
+    scratchpad_hidden = sum(
+        1
+        for w in windows_data
+        if isinstance(w, dict) and w.get("scratchpad") and not w.get("visible")
+    )
+
+    return {
+        "selected_output": selected["connector"],
+        "workspace": selected["workspace"],
+        "workspace_index": selected["workspace_index"],
+        "output": selected["connector"],
+        "output_role": selected["role"],
+        "output_label": selected["label"],
+        "refresh_hz": selected["refresh_hz"],
+        "layout": selected["layout"],
+        "layout_default": selected["layout_default"],
+        "layout_override": selected["layout_override"],
+        "vrr_mode": selected["vrr_mode"],
+        "vrr_active": selected["vrr_active"],
+        "hdr_supported": selected["hdr_supported"],
+        "hdr_mode": selected["hdr_mode"],
+        "hdr_active": selected["hdr_active"],
+        "sdr_white": selected["sdr_white"],
+        "tearing_enabled": selected["tearing_enabled"],
+        "bit_depth": selected["bit_depth"],
+        "bit_depth_active": selected["bit_depth_active"],
+        "direct_scanout_active": selected["direct_scanout_active"],
+        "direct_scanout_reason": selected["direct_scanout_reason"],
+        "border_effect": border_live or "none",
+        "cursor_effect": cursor_live or "none",
+        "screen_effect": screen_live or "none",
+        "window_effect": focused_win_effect,
+        "anim_move": anim_move_live or "none",
+        "anim_workspace": anim_ws_mode,
+        "game_auto_suspend_effects": bool(state.get("game_auto_suspend_effects", True)),
+        "game_auto_dnd": bool(state.get("game_auto_dnd", False)),
+        "scratchpad_hidden": scratchpad_hidden,
+        "submap": submap_data if isinstance(submap_data, str) else None,
+        "outputs": output_summaries,
+    }
+
+
+def cmd_layout(mode: str, output_selector: str | None, *, do_notify: bool) -> None:
+    with state_lock():
+        outputs = query_json(["outputs"])
+        workspaces = query_json(["workspaces"])
+        if not isinstance(outputs, list) or not isinstance(workspaces, list):
+            raise UmbrielError("failed to query Umbriel outputs/workspaces")
+
+        focused_out = next((o for o in outputs if isinstance(o, dict) and o.get("focused") and o.get("enabled")), None)
+        focused_name = str(focused_out["name"]) if focused_out else None
+        target_out = resolve_output(outputs, output_selector, require_enabled=True)
+        target_name = str(target_out["name"])
+
+        target_ws = next(
+            (w for w in workspaces if isinstance(w, dict) and w.get("output") == target_name and w.get("active")),
+            None,
+        )
+        if not target_ws:
+            raise UmbrielError(f"no active workspace on output '{target_name}'")
+
+        ws_index = int(target_ws.get("index") or 1)
+        ws_ref = str(target_ws.get("name") or ws_index)
+        cfg = load_umbriel_config()
+        default_mode = workspace_default_layout(cfg, target_name, str(target_out.get("config_name") or ""), ws_index)
+        current_mode = str(target_ws.get("layout") or default_mode)
+
+        if mode == "toggle":
+            idx = LAYOUTS.index(current_mode) if current_mode in LAYOUTS else 0
+            next_mode = LAYOUTS[(idx + 1) % len(LAYOUTS)]
+        elif mode == "reset":
+            next_mode = default_mode
+        else:
+            next_mode = mode
+
+        focused_ws = (
+            next(
+                (w for w in workspaces if isinstance(w, dict) and w.get("output") == focused_name and w.get("active")),
+                None,
+            )
+            if focused_name
+            else None
+        )
+        prev_window_id = str(focused_ws.get("focused_window") or "") if focused_ws else ""
+
+        need_hop = focused_name is not None and target_name != focused_name
+        hopped = False
+        try:
+            if need_hop:
+                run_umbriel(["msg", "workspace-switch", ws_ref, "--output", target_name], check=True)
+                hopped = True
+            run_umbriel(["msg", "workspace-set-layout", next_mode], check=True)
+        finally:
+            if hopped and focused_name and focused_ws:
+                focused_ref = str(focused_ws.get("name") or focused_ws.get("index") or 1)
+                run_umbriel(["msg", "workspace-switch", focused_ref, "--output", focused_name], check=False)
+                if prev_window_id:
+                    run_umbriel(["msg", "window-focus", prev_window_id], check=False)
+        settle()
+
+        if do_notify:
+            notify(f"Layout ({target_name} · WS {ws_ref})", next_mode.capitalize())
+
+
+def cmd_vrr(mode: str, output_selector: str | None, *, do_notify: bool) -> str:
+    with state_lock():
+        outputs = query_json(["outputs"])
+        if not isinstance(outputs, list):
+            raise UmbrielError("failed to query Umbriel outputs")
+        target = resolve_output(outputs, output_selector, prefer_role="main")
+        name = str(target["name"])
+        role, label = classify_output(target)
+        _, _, refresh_hz = output_mode_info(target)
+
+        current = config_get(output_config_key(name, "vrr"))
+        state = load_state()
+        if current not in VRR_MODES:
+            current = state["vrr"].get(role) or state["vrr"].get(name) or "disabled"
+
+        if mode == "toggle":
+            idx = VRR_MODES.index(current) if current in VRR_MODES else 0
+            next_mode = VRR_MODES[(idx + 1) % len(VRR_MODES)]
+        elif mode in VRR_ALIASES:
+            next_mode = VRR_ALIASES[mode]
+        else:
+            raise UmbrielError(f"invalid VRR mode '{mode}'")
+
+        config_set(output_config_key(name, "vrr"), next_mode)
+        state["vrr"][role] = next_mode
+        save_state(state)
+        settle()
+
+        if do_notify:
+            hz_str = f"{refresh_hz}Hz" if refresh_hz else "fixed refresh"
+            labels = {
+                "fullscreen": f"Smart Auto (Fullscreen only, desktop {hz_str})",
+                "always": "Enabled (Always On)",
+                "disabled": f"Disabled (Fixed {hz_str})",
+            }
+            notify(f"VRR ({label} · {name})", labels[next_mode])
+        return name
+
+
+def cmd_hdr(mode: str, output_selector: str | None, *, do_notify: bool) -> str:
+    with state_lock():
+        outputs = query_json(["outputs"])
+        if not isinstance(outputs, list):
+            raise UmbrielError("failed to query Umbriel outputs")
+        target = resolve_output(outputs, output_selector, prefer_role="main")
+        name = str(target["name"])
+        role, label = classify_output(target)
+
+        color_data = query_json(["color"], allow_fail=True) or {}
+        cinfo = next(
+            (o for o in (color_data.get("outputs") or []) if isinstance(o, dict) and o.get("name") == name),
+            {},
+        )
+        current = str(cinfo.get("hdr_mode") or config_get(output_config_key(name, "hdr")) or "off")
+        if mode == "toggle":
+            next_mode = "auto" if current == "off" else "off"
+        elif mode in HDR_MODES:
+            next_mode = mode
+        else:
+            raise UmbrielError(f"invalid HDR mode '{mode}'")
+
+        config_set(output_config_key(name, "hdr"), next_mode)
+        state = load_state()
+        state["hdr"][role] = next_mode
+        save_state(state)
+        settle()
+
+        if do_notify:
+            notify(f"HDR ({label} · {name})", next_mode.capitalize())
+        return name
+
+
+def cmd_sdr_white(nits: float, output_selector: str | None, *, do_notify: bool) -> str:
+    if not (80.0 <= nits <= 1000.0):
+        raise UmbrielError("sdr-white must be between 80 and 1000 nits")
+    with state_lock():
+        outputs = query_json(["outputs"])
+        if not isinstance(outputs, list):
+            raise UmbrielError("failed to query Umbriel outputs")
+        target = resolve_output(outputs, output_selector, prefer_role="main")
+        name = str(target["name"])
+        role, label = classify_output(target)
+
+        run_umbriel(["msg", "output-sdr-white", f"{nits:.0f}", "--output", name], check=True)
+        config_set(output_config_key(name, "sdr_white"), float(nits))
+        state = load_state()
+        state["sdr_white"][role] = float(nits)
+        save_state(state)
+        settle()
+
+        if do_notify:
+            notify(f"SDR White ({label} · {name})", f"{nits:.0f} nits")
+        return name
+
+
+def cmd_tearing(mode: str, output_selector: str | None, *, do_notify: bool) -> str:
+    with state_lock():
+        outputs = query_json(["outputs"])
+        if not isinstance(outputs, list):
+            raise UmbrielError("failed to query Umbriel outputs")
+        target = resolve_output(outputs, output_selector, prefer_role="main")
+        name = str(target["name"])
+        role, label = classify_output(target)
+
+        current = config_get(output_config_key(name, "tearing")) == "true"
+        if mode == "toggle":
+            next_val = not current
+        elif mode in ("on", "true"):
+            next_val = True
+        elif mode in ("off", "false"):
+            next_val = False
+        else:
+            raise UmbrielError(f"invalid tearing mode '{mode}'")
+
+        config_set(output_config_key(name, "tearing"), next_val)
+        state = load_state()
+        state["tearing"][role] = next_val
+        save_state(state)
+        settle()
+
+        if do_notify:
+            notify(f"Tearing ({label} · {name})", "Allowed (Fullscreen)" if next_val else "Disabled (VSync)")
+        return name
+
+
+def cmd_border(mode: str, *, do_notify: bool) -> None:
+    with state_lock():
+        current = config_get("effects.border", "") or "none"
+        if current not in BORDER_MODES:
+            current = "none"
+        if mode == "cycle":
+            next_mode = BORDER_MODES[(BORDER_MODES.index(current) + 1) % len(BORDER_MODES)]
+        elif mode == "toggle":
+            next_mode = "none" if current != "none" else "pulse"
+        elif mode in BORDER_MODES:
+            next_mode = mode
+        else:
+            raise UmbrielError(f"invalid border mode '{mode}'")
+
+        val = "" if next_mode == "none" else next_mode
+        reset_runtime_border_effects()
+        config_set("effects.border", val)
+        state = load_state()
+        state["border"] = val
+        save_state(state)
+        settle()
+
+        if do_notify:
+            labels = {"none": "Solid Theme", "pulse": "Pulse Glow", "audio": "Audio Reactive"}
+            notify("Window Border", labels[next_mode])
+
+
+def cmd_cursor(mode: str, *, do_notify: bool) -> None:
+    with state_lock():
+        current = config_get("effects.cursor", "") or "none"
+        if current not in CURSOR_MODES:
+            current = "none"
+        if mode == "cycle":
+            next_mode = CURSOR_MODES[(CURSOR_MODES.index(current) + 1) % len(CURSOR_MODES)]
+        elif mode == "toggle":
+            next_mode = "none" if current != "none" else "trail"
+        elif mode in CURSOR_MODES:
+            next_mode = mode
+        else:
+            raise UmbrielError(f"invalid cursor mode '{mode}'")
+
+        val = "" if next_mode == "none" else next_mode
+        reset_runtime_cursor_effect()
+        config_set("effects.cursor", val)
+        state = load_state()
+        state["cursor"] = val
+        save_state(state)
+        settle()
+
+        if do_notify:
+            labels = {
+                "none": "Normal",
+                "trail": "Comet Trail",
+                "trail-path": "Ribbon Trail",
+                "glow": "Spotlight Glow",
+            }
+            notify("Cursor Effect", labels[next_mode])
+
+
+def cmd_screen(mode: str, *, do_notify: bool) -> None:
+    with state_lock():
+        current = config_get("effects.screen", "") or "none"
+        if current not in SCREEN_MODES:
+            current = "none"
+        if mode in ("toggle", "cycle"):
+            next_mode = "none" if current != "none" else "vignette"
+        elif mode in SCREEN_MODES:
+            next_mode = mode
+        else:
+            raise UmbrielError(f"invalid screen mode '{mode}'")
+
+        val = "" if next_mode == "none" else next_mode
+        reset_runtime_screen_effects()
+        config_set("effects.screen", val)
+        state = load_state()
+        state["screen"] = val
+        save_state(state)
+        settle()
+
+        if do_notify:
+            notify("Screen Effect", "Vignette" if next_mode == "vignette" else "Off")
+
+
+def cmd_window_effect(mode: str, *, do_notify: bool) -> None:
+    with state_lock():
+        windows = query_json(["windows"], allow_fail=True) or []
+        focused = next((w for w in windows if isinstance(w, dict) and w.get("focused") and w.get("visible")), None)
+        if not focused:
+            raise UmbrielError("no focused window for window effect")
+        cur = ""
+        we = focused.get("window_effect") or {}
+        if not we.get("suppressed") and we.get("name"):
+            cur = str(we["name"])
+        if mode in ("toggle", "cycle"):
+            next_mode = "none" if cur == "scanlines" else "scanlines"
+        elif mode in WINDOW_MODES:
+            next_mode = mode
+        else:
+            raise UmbrielError(f"invalid window effect '{mode}'")
+
+        if next_mode == "none":
+            run_umbriel(["msg", "effect-window-reset", str(focused["id"])], check=True)
+        else:
+            run_umbriel(["msg", "effect-window-set", next_mode, "--window", str(focused["id"])], check=True)
+        settle()
+
+        if do_notify:
+            notify("Window Effect", "CRT Scanlines" if next_mode == "scanlines" else "Normal")
+
+
+def cmd_anim_move(mode: str, *, do_notify: bool) -> None:
+    with state_lock():
+        current = config_get("animation.windows_move.effect", "") or "none"
+        if mode in ("toggle", "cycle"):
+            next_mode = "none" if current == "squash" else "squash"
+        elif mode in ANIM_MOVE_MODES:
+            next_mode = mode
+        else:
+            raise UmbrielError(f"invalid anim-move mode '{mode}'")
+
+        val = "" if next_mode == "none" else next_mode
+        config_set("animation.windows_move.effect", val)
+        state = load_state()
+        state["anim_move"] = val
+        save_state(state)
+        settle()
+
+        if do_notify:
+            notify("Window Move Animation", "Squash" if next_mode == "squash" else "Standard")
+
+
+def cmd_anim_workspace(mode: str, *, do_notify: bool) -> None:
+    with state_lock():
+        cur_style = config_get("animation.workspaces.style", "slide") or "slide"
+        cur_eff = config_get("animation.workspaces.effect", "") or ""
+        current = "wipe" if (cur_style == "reveal" and cur_eff == "workspace_wipe") else "slide"
+        if mode in ("toggle", "cycle"):
+            next_mode = "slide" if current == "wipe" else "wipe"
+        elif mode in ANIM_WS_MODES:
+            next_mode = mode
+        else:
+            raise UmbrielError(f"invalid anim-workspace mode '{mode}'")
+
+        if next_mode == "wipe":
+            config_set("animation.workspaces.style", "reveal")
+            config_set("animation.workspaces.effect", "workspace_wipe")
+        else:
+            config_set("animation.workspaces.style", "slide")
+            config_set("animation.workspaces.effect", "")
+        state = load_state()
+        state["anim_workspace"] = next_mode
+        save_state(state)
+        settle()
+
+        if do_notify:
+            notify("Workspace Animation", "Wipe Reveal" if next_mode == "wipe" else "Slide")
+
+
+def cmd_profile(name: str, *, do_notify: bool) -> None:
+    with state_lock():
+        presets = {
+            "gaming": {"border": "", "cursor": "", "screen": "", "anim_move": "", "anim_workspace": "slide"},
+            "minimal": {"border": "", "cursor": "", "screen": "", "anim_move": "", "anim_workspace": "slide"},
+            "candy": {"border": "pulse", "cursor": "trail", "screen": "", "anim_move": "squash", "anim_workspace": "wipe"},
+        }
+        if name not in presets:
+            raise UmbrielError(f"unknown profile '{name}'")
+        p = presets[name]
+        reset_runtime_border_effects()
+        reset_runtime_cursor_effect()
+        reset_runtime_screen_effects()
+        config_set("effects.border", p["border"])
+        config_set("effects.cursor", p["cursor"])
+        config_set("effects.screen", p["screen"])
+        config_set("animation.windows_move.effect", p["anim_move"])
+        if p["anim_workspace"] == "wipe":
+            config_set("animation.workspaces.style", "reveal")
+            config_set("animation.workspaces.effect", "workspace_wipe")
+        else:
+            config_set("animation.workspaces.style", "slide")
+            config_set("animation.workspaces.effect", "")
+
+        state = load_state()
+        state.update(p)
+        save_state(state)
+        settle()
+
+        if do_notify:
+            labels = {
+                "gaming": "Clean / Gaming (shaders off; VRR unchanged)",
+                "minimal": "Minimal (shaders & extra animations off)",
+                "candy": "Eye Candy (Pulse + Trail + Squash + Wipe)",
+            }
+            notify("Umbriel Profile", labels[name])
+
+
+def cmd_watcher_opt(option: str, mode: str) -> None:
+    key_map = {
+        "suspend-effects": "game_auto_suspend_effects",
+        "auto-dnd": "game_auto_dnd",
+    }
+    key = key_map[option]
+    with state_lock():
+        state = load_state()
+        current = bool(state.get(key, DEFAULT_STATE[key]))
+        if mode == "toggle":
+            next_val = not current
+        else:
+            next_val = mode == "on"
+        state[key] = next_val
+        save_state(state)
+
+
+def cmd_apply_state() -> None:
+    with state_lock():
+        state = load_state()
+        outputs = query_json(["outputs"], allow_fail=True)
+        if not isinstance(outputs, list):
+            return
+
+        by_role: dict[str, str] = {}
+        for out in outputs:
+            if isinstance(out, dict) and out.get("name"):
+                role, _ = classify_output(out)
+                by_role[role] = str(out["name"])
+                by_role[str(out["name"])] = str(out["name"])
+
+        for key_role, vrr_mode in (state.get("vrr") or {}).items():
+            conn = by_role.get(key_role)
+            if conn and vrr_mode in VRR_MODES:
+                config_set(output_config_key(conn, "vrr"), vrr_mode)
+
+        for key_role, hdr_mode in (state.get("hdr") or {}).items():
+            conn = by_role.get(key_role)
+            if conn and hdr_mode in HDR_MODES:
+                config_set(output_config_key(conn, "hdr"), hdr_mode)
+
+        for key_role, nits in (state.get("sdr_white") or {}).items():
+            conn = by_role.get(key_role)
+            if conn and isinstance(nits, (int, float)) and 80.0 <= nits <= 1000.0:
+                config_set(output_config_key(conn, "sdr_white"), float(nits))
+                run_umbriel(["msg", "output-sdr-white", f"{float(nits):.0f}", "--output", conn], check=False)
+
+        for key_role, tear in (state.get("tearing") or {}).items():
+            conn = by_role.get(key_role)
+            if conn and isinstance(tear, bool):
+                config_set(output_config_key(conn, "tearing"), tear)
+
+        border = str(state.get("border") or "")
+        if border in ("", "pulse", "audio"):
+            config_set("effects.border", border)
+
+        cursor = str(state.get("cursor") or "")
+        if cursor in ("", "trail", "trail-path", "glow"):
+            config_set("effects.cursor", cursor)
+
+        screen = str(state.get("screen") or "")
+        if screen in ("", "vignette"):
+            config_set("effects.screen", screen)
+
+        anim_move = str(state.get("anim_move") or "")
+        if anim_move in ("", "squash"):
+            config_set("animation.windows_move.effect", anim_move)
+
+        anim_ws = str(state.get("anim_workspace") or "slide")
+        if anim_ws == "wipe":
+            config_set("animation.workspaces.style", "reveal")
+            config_set("animation.workspaces.effect", "workspace_wipe")
+        else:
+            config_set("animation.workspaces.style", "slide")
+            config_set("animation.workspaces.effect", "")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="cmd")
+
+    def add_common(p: argparse.ArgumentParser) -> None:
+        p.add_argument("--json", action="store_true", help="Print updated JSON status to stdout")
+        p.add_argument("--notify", action="store_true", help="Show a desktop notification")
+        p.add_argument("--quiet", action="store_true", help="Suppress desktop notifications")
+
+    p_status = sub.add_parser("status")
+    p_status.add_argument("--output", help="Selected output connector, role (main/portrait), or model")
+
+    sub.add_parser("apply-state")
+
+    p_layout = sub.add_parser("layout")
+    p_layout.add_argument("mode", choices=(*LAYOUTS, "toggle", "reset"), default="toggle", nargs="?")
+    p_layout.add_argument("--output", help="Target monitor connector, role, or model")
+    add_common(p_layout)
+
+    p_vrr = sub.add_parser("vrr")
+    p_vrr.add_argument("mode", choices=(*VRR_ALIASES.keys(), "toggle"), default="toggle", nargs="?")
+    p_vrr.add_argument("--output", help="Target monitor connector, role, or model (defaults to main)")
+    add_common(p_vrr)
+
+    p_hdr = sub.add_parser("hdr")
+    p_hdr.add_argument("mode", choices=(*HDR_MODES, "toggle"), default="toggle", nargs="?")
+    p_hdr.add_argument("--output", help="Target monitor connector, role, or model (defaults to main)")
+    add_common(p_hdr)
+
+    p_sdr = sub.add_parser("sdr-white")
+    p_sdr.add_argument("nits", type=float)
+    p_sdr.add_argument("--output", help="Target monitor connector, role, or model (defaults to main)")
+    add_common(p_sdr)
+
+    p_tear = sub.add_parser("tearing")
+    p_tear.add_argument("mode", choices=("on", "off", "toggle"), default="toggle", nargs="?")
+    p_tear.add_argument("--output", help="Target monitor connector, role, or model (defaults to main)")
+    add_common(p_tear)
+
+    p_border = sub.add_parser("border")
+    p_border.add_argument("mode", choices=(*BORDER_MODES, "cycle", "toggle"), default="cycle", nargs="?")
+    p_border.add_argument("--output", help="Output to highlight in JSON status")
+    add_common(p_border)
+
+    p_cursor = sub.add_parser("cursor")
+    p_cursor.add_argument("mode", choices=(*CURSOR_MODES, "cycle", "toggle"), default="cycle", nargs="?")
+    p_cursor.add_argument("--output", help="Output to highlight in JSON status")
+    add_common(p_cursor)
+
+    p_screen = sub.add_parser("screen")
+    p_screen.add_argument("mode", choices=(*SCREEN_MODES, "cycle", "toggle"), default="toggle", nargs="?")
+    p_screen.add_argument("--output", help="Output to highlight in JSON status")
+    add_common(p_screen)
+
+    p_win = sub.add_parser("window")
+    p_win.add_argument("mode", choices=(*WINDOW_MODES, "cycle", "toggle"), default="toggle", nargs="?")
+    p_win.add_argument("--output", help="Output to highlight in JSON status")
+    add_common(p_win)
+
+    p_am = sub.add_parser("anim-move")
+    p_am.add_argument("mode", choices=(*ANIM_MOVE_MODES, "cycle", "toggle"), default="toggle", nargs="?")
+    p_am.add_argument("--output", help="Output to highlight in JSON status")
+    add_common(p_am)
+
+    p_aw = sub.add_parser("anim-workspace")
+    p_aw.add_argument("mode", choices=(*ANIM_WS_MODES, "cycle", "toggle"), default="toggle", nargs="?")
+    p_aw.add_argument("--output", help="Output to highlight in JSON status")
+    add_common(p_aw)
+
+    p_prof = sub.add_parser("profile")
+    p_prof.add_argument("name", choices=("gaming", "minimal", "candy"))
+    p_prof.add_argument("--output", help="Output to highlight in JSON status")
+    add_common(p_prof)
+
+    p_wopt = sub.add_parser("watcher-opt")
+    p_wopt.add_argument("option", choices=("suspend-effects", "auto-dnd"))
+    p_wopt.add_argument("mode", choices=("on", "off", "toggle"), default="toggle", nargs="?")
+    p_wopt.add_argument("--output", help="Output to highlight in JSON status")
+    add_common(p_wopt)
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    cmd = args.cmd or "status"
+    want_json = cmd == "status" or bool(getattr(args, "json", False))
+    do_notify = bool(getattr(args, "notify", False)) and not bool(getattr(args, "quiet", False))
+    selected_output = getattr(args, "output", None)
+
+    try:
+        if cmd == "apply-state":
+            cmd_apply_state()
+            return 0
+        if cmd == "layout":
+            cmd_layout(args.mode, args.output, do_notify=do_notify)
+        elif cmd == "vrr":
+            selected_output = cmd_vrr(args.mode, args.output, do_notify=do_notify)
+        elif cmd == "hdr":
+            selected_output = cmd_hdr(args.mode, args.output, do_notify=do_notify)
+        elif cmd == "sdr-white":
+            selected_output = cmd_sdr_white(args.nits, args.output, do_notify=do_notify)
+        elif cmd == "tearing":
+            selected_output = cmd_tearing(args.mode, args.output, do_notify=do_notify)
+        elif cmd == "border":
+            cmd_border(args.mode, do_notify=do_notify)
+        elif cmd == "cursor":
+            cmd_cursor(args.mode, do_notify=do_notify)
+        elif cmd == "screen":
+            cmd_screen(args.mode, do_notify=do_notify)
+        elif cmd == "window":
+            cmd_window_effect(args.mode, do_notify=do_notify)
+        elif cmd == "anim-move":
+            cmd_anim_move(args.mode, do_notify=do_notify)
+        elif cmd == "anim-workspace":
+            cmd_anim_workspace(args.mode, do_notify=do_notify)
+        elif cmd == "profile":
+            cmd_profile(args.name, do_notify=do_notify)
+        elif cmd == "watcher-opt":
+            cmd_watcher_opt(args.option, args.mode)
+
+        if want_json:
+            print(json.dumps(get_status(selected_output)))
+        return 0
+    except (UmbrielError, OSError, ValueError) as exc:
+        if want_json:
+            print(json.dumps({"error": str(exc)}))
+        else:
+            print(f"umbriel-ctl: {exc}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

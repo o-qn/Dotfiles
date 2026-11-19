@@ -1,51 +1,15 @@
 #!/usr/bin/env python3
-"""Workspace-specific layout switcher for Umbriel (supports targeting a specific output from the bar)."""
-import argparse
-import json
-import subprocess
+"""Workspace-specific layout switcher for Umbriel (delegates to umbriel-ctl)."""
+import os
+from pathlib import Path
 import sys
 
-LAYOUTS = ("dwindle", "scrolling", "master", "stacking")
+CTL = Path(__file__).resolve().with_name("umbriel-ctl")
 
 
-def query_json(args: list[str]):
-    return json.loads(subprocess.check_output(["umbriel", *args, "-j"], text=True))
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=(*LAYOUTS, "toggle"), default="toggle", nargs="?")
-    parser.add_argument("--output", help="Target monitor connector (e.g. DP-2 or DP-3)")
-    args = parser.parse_args()
-
-    outputs = query_json(["outputs"])
-    workspaces = query_json(["workspaces"])
-
-    focused_output = next((o["name"] for o in outputs if o.get("focused")), "DP-2")
-    target_output = args.output or focused_output
-
-    target_ws = next((w for w in workspaces if w.get("output") == target_output and w.get("active")), None)
-    current_mode = target_ws.get("layout", "dwindle") if target_ws else "dwindle"
-    target_index = str(target_ws.get("index", 1)) if target_ws else "1"
-
-    if args.mode == "toggle":
-        idx = LAYOUTS.index(current_mode) if current_mode in LAYOUTS else 0
-        next_mode = LAYOUTS[(idx + 1) % len(LAYOUTS)]
-    else:
-        next_mode = args.mode
-
-    if target_output != focused_output:
-        subprocess.run(["umbriel", "msg", "workspace-switch", target_index, "--output", target_output], check=False)
-
-    subprocess.run(["umbriel", "msg", "workspace-set-layout", next_mode], check=False)
-
-    if target_output != focused_output:
-        focused_ws = next((w for w in workspaces if w.get("output") == focused_output and w.get("active")), None)
-        focused_index = str(focused_ws.get("index", 1)) if focused_ws else "1"
-        subprocess.run(["umbriel", "msg", "workspace-switch", focused_index, "--output", focused_output], check=False)
-
-    return 0
+def main() -> None:
+    os.execv(sys.executable, [sys.executable, str(CTL), "layout", *sys.argv[1:]])
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
