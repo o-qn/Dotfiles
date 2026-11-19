@@ -7,16 +7,17 @@ files = [
     "/usr/share/umbriel/effects/border/pulse/effect.toml",
     "/usr/share/umbriel/effects/border/audio/effect.toml",
     "/usr/share/umbriel/effects/cursor/trail/effect.toml",
+    "/usr/share/umbriel/effects/cursor/trail-path/effect.toml",
     "/usr/share/umbriel/effects/cursor/glow/effect.toml",
+    "/usr/share/umbriel/effects/screen/vignette/effect.toml",
+    "/usr/share/umbriel/effects/window/scanlines/effect.toml",
     "/usr/share/umbriel/effects/animation/squash/effect.toml",
     "/usr/share/umbriel/effects/animation/workspace_wipe/effect.toml",
 ]
 
 [include.optional]
 files = [
-    "vrr-override.toml",
-    "effects-override.toml",
-    "noctalia.toml",
+  "noctalia.toml",
 ]
 
 # ─── General & Session ───────────────────────────────────────────────────────
@@ -24,6 +25,8 @@ files = [
 [general]
 autostart = [
     "noctalia --daemon",
+    "~/.local/bin/umbriel-ctl apply-state",
+    "~/.local/bin/umbriel-watcher",
 ]
 xwayland_native_resolution = true
 xwayland_primary_output = "DP-2"
@@ -48,6 +51,10 @@ scale = 1.25
 transform = "normal"
 position = [1080, 388]
 bit_depth = 10
+vrr = "fullscreen"
+hdr = "off"
+sdr_white = 203.0
+tearing = false
 workspaces = 10
 focus_at_startup = true
 
@@ -58,6 +65,9 @@ transform = "90"
 position = [0, 11]
 vrr = "fullscreen"
 workspaces = 10
+
+[output.DP-3.layout.scrolling]
+default_extent_fraction = 1.0
 
 # ─── Appearance & Effects ────────────────────────────────────────────────────
 
@@ -84,14 +94,7 @@ offset_y = 4
 mode = "off"
 
 # Colors & border colors are dynamically managed by Noctalia in noctalia.toml
-
-[effects.pool.borders]
-kind = "border"
-choose = ["pulse", "audio"]
-
-[effects.pool.cursors]
-kind = "cursor"
-choose = ["trail", "glow"]
+# Runtime VRR / HDR / shader overrides live in ~/.local/state/umbriel/state.json (managed by umbriel-ctl).
 
 # ─── Input ───────────────────────────────────────────────────────────────────
 
@@ -126,6 +129,18 @@ back_and_forth = true
 [[workspace]]
 index = 1
 layout.mode = "dwindle"
+
+# Named Scratchpads
+[[scratchpad]]
+name = "quick"
+hide_when_empty = true
+proportional_size = true
+
+[[scratchpad]]
+name = "term"
+spawn_when_empty = "kitty --class scratchpad-term"
+hide_when_empty = true
+proportional_size = true
 
 [layout]
 mode = "scrolling"
@@ -187,9 +202,14 @@ blur = true
 blur_popups = true
 
 [[window_rule]]
-match.app_id = "^(kitty|desktop-doctor)$"
+match.app_id = "^(kitty|desktop-doctor|scratchpad-term)$"
 blur = true
 blur_popups = true
+
+[[window_rule]]
+match.app_id = "^scratchpad-term$"
+default_floating = true
+default_floating_size = { width = 0.65, height = 0.60 }
 
 # Browser: crisp, opaque, full-width column in scrolling without maximizing over dwindle splits
 [[window_rule]]
@@ -231,6 +251,7 @@ match.title = "^[Pp]icture[- ][Ii]n[- ][Pp]icture$"
 default_floating = true
 default_maximize = false
 default_pinned = true
+default_position = { anchor = "bottom_right", x = -24, y = -24 }
 
 # Notification toasts
 [[window_rule]]
@@ -238,20 +259,22 @@ match.title = "^notificationtoasts_"
 default_floating = true
 default_focused = false
 
-# Games & Steam: route to main 200Hz monitor with VRR & pointer confinement
+# Games & Steam: route to main 1440p monitor, maximize direct scanout, respect user VRR toggle
 [[window_rule]]
 match.app_id = "^(steam_app_.*|gamescope|cs2|dota2)$"
 default_output = "DP-2"
-vrr = "always"
 confine_pointer = true
 blur = false
+shadow = false
+border_effect = "off"
 
 [[window_rule]]
 match.content_type = "game"
 default_output = "DP-2"
-vrr = "always"
 confine_pointer = true
 blur = false
+shadow = false
+border_effect = "off"
 
 # ─── Layer Rules ─────────────────────────────────────────────────────────────
 # Blur only actual Noctalia cards (bar, dock, notifications, OSD, panels) with
@@ -438,9 +461,15 @@ blur = false
 "Mod+F1"              = "spawn ~/.local/bin/desktop-shortcuts umbriel"
 "Mod+Shift+Slash"     = "cheatsheet-toggle"
 "Mod+Shift+R"         = "spawn ~/.local/bin/desktop-reload umbriel"
-"Mod+Ctrl+M"          = "output-toggle DP-3"
+"Mod+Ctrl+M"          = "spawn ~/.local/bin/desktop-displays toggle portrait"
 "Mod+Shift+E"         = "session-quit"
 "Mod+Shift+D"         = "spawn ~/.local/bin/umbriel-toggle-vrr"
+
+# Scratchpads (non-colliding chords)
+"Mod+Apostrophe"       = { action = "scratchpad-toggle quick", repeat = false }
+"Mod+Shift+Apostrophe" = { action = "window-toggle-scratchpad quick", repeat = false }
+"Mod+Ctrl+Apostrophe"  = { action = "scratchpad-window-show-next quick", repeat = false }
+"Mod+Semicolon"        = { action = "scratchpad-toggle term", repeat = false }
 
 # Umbriel Multi-Layout & Shader Effects (Workspace-specific)
 "Mod+Alt+Space"       = "workspace-set-layout toggle dwindle scrolling master stacking"
@@ -454,3 +483,37 @@ blur = false
 "Mod+Ctrl+E"          = "spawn ~/.local/bin/umbriel-effects border cycle"
 "Mod+Alt+E"           = "spawn ~/.local/bin/umbriel-effects border toggle"
 "Mod+Alt+C"           = "spawn ~/.local/bin/umbriel-effects cursor cycle"
+
+# Modal Submap: Window Snap, Pin, Tabs & Output Swap (Mod+Alt+W)
+"Mod+Alt+W"                  = { action = "submap window", repeat = false }
+"submap[window],Escape"      = { action = "submap reset", repeat = false }
+"submap[window],Return"      = { action = "submap reset", repeat = false }
+"submap[window],q"           = { action = "submap reset", repeat = false }
+"submap[window],Left"        = "window-set-region left"
+"submap[window],Right"       = "window-set-region right"
+"submap[window],Up"          = "window-set-region top"
+"submap[window],Down"        = "window-set-region bottom"
+"submap[window],1"           = { action = "window-set-region top_left", submap = "reset" }
+"submap[window],2"           = { action = "window-set-region top_right", submap = "reset" }
+"submap[window],3"           = { action = "window-set-region bottom_left", submap = "reset" }
+"submap[window],4"           = { action = "window-set-region bottom_right", submap = "reset" }
+"submap[window],0"           = { action = "window-clear-region", submap = "reset" }
+"submap[window],c"           = { action = "window-center", submap = "reset" }
+"submap[window],p"           = { action = "window-toggle-pinned", submap = "reset" }
+"submap[window],m"           = { action = "window-toggle-maximize-to-edges", submap = "reset" }
+"submap[window],t"           = "column-toggle-tab-bar"
+"submap[window],BracketLeft" = "column-focus-tab-previous"
+"submap[window],BracketRight"= "column-focus-tab-next"
+"submap[window],s"           = { action = "workspace-swap-active-output-next", submap = "reset" }
+
+# Modal Submap: Screencast Control (Mod+Alt+S)
+"Mod+Alt+S"                  = { action = "submap cast", repeat = false }
+"submap[cast],Escape"        = { action = "submap reset", repeat = false }
+"submap[cast],Return"        = { action = "submap reset", repeat = false }
+"submap[cast],q"             = { action = "submap reset", repeat = false }
+"submap[cast],o"             = { action = "screencast-set-output", submap = "reset" }
+"submap[cast],w"             = { action = "screencast-set-window", submap = "reset" }
+"submap[cast],f"             = { action = "screencast-follow-window", submap = "reset" }
+"submap[cast],m"             = { action = "screencast-follow-output", submap = "reset" }
+"submap[cast],p"             = { action = "screencast-follow-stop", submap = "reset" }
+"submap[cast],x"             = { action = "screencast-clear", submap = "reset" }
