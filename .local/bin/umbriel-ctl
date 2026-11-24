@@ -687,7 +687,6 @@ def cmd_sdr_white(nits: float, output_selector: str | None, *, do_notify: bool) 
         role, label = classify_output(target)
 
         run_umbriel(["msg", "output-sdr-white", f"{nits:.0f}", "--output", name], check=True)
-        config_set(output_config_key(name, "sdr_white"), float(nits))
         state = load_state()
         state["sdr_white"][role] = float(nits)
         save_state(state)
@@ -968,7 +967,6 @@ def cmd_apply_state() -> None:
         for key_role, nits in (state.get("sdr_white") or {}).items():
             conn = by_role.get(key_role)
             if conn and isinstance(nits, (int, float)) and 80.0 <= nits <= 1000.0:
-                config_set(output_config_key(conn, "sdr_white"), float(nits))
                 run_umbriel(["msg", "output-sdr-white", f"{float(nits):.0f}", "--output", conn], check=False)
 
         for key_role, tear in (state.get("tearing") or {}).items():

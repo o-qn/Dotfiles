@@ -63,7 +63,7 @@ local CURSOR_DESC = {
     glow         = "Spotlight Glow: Soft theme-colored halo around the pointer.",
 }
 
-local SDR_WHITE_PRESETS = { 160, 203, 260, 320 }
+local SDR_WHITE_PRESETS = { 203, 260, 320, 400 }
 
 local opened = false
 local busy = false
