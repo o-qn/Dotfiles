@@ -1,4 +1,4 @@
-config_version = 15
+config_version = 16
 
 [bar.default]
 center = [ "clock", "cat", "volume" ]
@@ -36,7 +36,7 @@ widget_order = [
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@DP-2".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 0.88
         background_radius = 12.0
         center_password_text = false
@@ -64,7 +64,7 @@ widget_order = [
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@DP-3".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 0.88
         background_radius = 12.0
         center_password_text = false
@@ -92,7 +92,7 @@ widget_order = [
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@WAYLAND-1".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 0.88
         background_radius = 12.0
         center_password_text = false
@@ -120,7 +120,7 @@ widget_order = [
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@WL-1".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 0.88
         background_radius = 12.0
         center_password_text = false
@@ -153,25 +153,25 @@ avatar_path = "/home/qn/Pictures/wallpaper/nebula.jpg"
 builtin = "Dracula"
 community_palette = "ADW"
 mode = "dark"
-source = "builtin"
-wallpaper_scheme = "vibrant"
+source = "wallpaper"
+wallpaper_scheme = "faithful"
 
     [theme.templates]
-    builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "mango", "niri", "qt", "umbriel" ]
-    community_ids = [ "opencode", "papirus-icons", "fzf" ]
+    builtin_ids = [ "alacritty", "btop", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "niri", "qt", "umbriel" ]
+    community_ids = [ "antigravity", "opencode", "papirus-icons", "fzf" ]
     enable_community_templates = true
 
 [wallpaper.default]
-path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.last]
-path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.monitors.DP-2]
-path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [wallpaper.monitors.DP-3]
-path = "/home/qn/.local/share/wallpapers/wallhaven-k8rkzq.jpg"
+path = "/home/qn/.local/share/wallpapers/tokyo-midnight.png"
 
 [[wallpaper.favorite]]
 palette_source = "wallpaper"
