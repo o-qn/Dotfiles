@@ -1,7 +1,7 @@
 -- Glass is opt-in: ordinary apps, videos and games stay opaque and unblurred.
 hl.window_rule({ name = "default-no-glass", match = { class = ".*" }, no_blur = true })
 hl.window_rule({
-    name = "kitty-glass", match = { class = "^(kitty|desktop-doctor)$" },
+    name = "kitty-glass", match = { class = "^(kitty|desktop-doctor|dev[.]noctalia[.]luciole|luciole)$" },
     no_blur = false,
 })
 hl.window_rule({

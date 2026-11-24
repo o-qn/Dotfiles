@@ -117,7 +117,7 @@ workspace "scratchpad"
 // Cursor, Screenshots & Environment Variables
 // -----------------------------------------------------------------------------
 cursor {
-    xcursor-theme "breeze_cursors"
+    xcursor-theme "Bibata-Modern-Ice"
     xcursor-size 24
 }
 
@@ -164,9 +164,9 @@ window-rule {
     opacity 0.84
 }
 
-// Kitty & desktop-doctor glass blur (matching Hyprland's kitty-glass)
+// Kitty, desktop-doctor & Luciole glass blur (native background opacity)
 window-rule {
-    match app-id=r"^(kitty|desktop-doctor)$"
+    match app-id=r"^(kitty|desktop-doctor|dev\.noctalia\.luciole|luciole)$"
     draw-border-with-background false
     background-effect {
         blur true
@@ -255,7 +255,7 @@ binds {
     // Applications (matching Hyprland keybinds.lua)
     Mod+Q        { spawn "kitty"; }
     Mod+Return   { spawn "kitty"; }
-    Mod+E        { spawn "dolphin"; }
+    Mod+E        { spawn "luciole"; }
     Mod+B        { spawn-sh "~/.local/bin/launch-browser"; }
     Mod+Escape   { spawn "kitty" "-e" "btop"; }
     Mod+U hotkey-overlay-title="Toggle network tuning (CAKE / default)" { spawn-sh "~/.local/bin/net-toggle"; }

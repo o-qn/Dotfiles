@@ -13,7 +13,7 @@ end
 -- Your original muscle memory.
 cmd("SUPER + Q", "kitty", "Open terminal")
 bind("SUPER + C", hl.dsp.window.close(), "Close focused window")
-cmd("SUPER + E", "dolphin", "Open Dolphin")
+cmd("SUPER + E", "luciole", "Open Luciole")
 cmd("SUPER + B", "~/.local/bin/launch-browser", "Open Zen Browser")
 shell("SUPER + R", "panel-toggle launcher", "Application launcher")
 shell("SUPER + V", "panel-toggle clipboard", "Clipboard history")
