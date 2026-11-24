@@ -15,6 +15,8 @@ CONFIG_DIRS = (
     'niri',
     'hypr',
     'noctalia',
+    'luciole',
+    'xdg-desktop-portal',
     'kitty',
     'alacritty',
     'fish',
@@ -31,7 +33,6 @@ def targets(home):
     nemo_actions_dir = ROOT / '.local/share/nemo/actions'
     return [home / '.config' / name for name in CONFIG_DIRS] + [
         home / '.config/dolphinrc',
-        home / '.config/gwenviewrc',
         home / '.config/easyeffectsrc',
         *[home / '.local/bin' / p.name for p in sorted(bin_dir.iterdir()) if p.is_file()],
         *[home / '.local/share/nemo/actions' / p.name for p in sorted(nemo_actions_dir.iterdir()) if p.is_file()],
@@ -58,7 +59,7 @@ def deploy(home):
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.is_symlink():
             target.unlink()
-        if source.name in {'dolphinrc', 'gwenviewrc', 'easyeffectsrc'} or source.suffix in {'.toml', '.conf', '.lua', '.py', '.sh'}:
+        if source.name in {'dolphinrc', 'easyeffectsrc'} or source.suffix in {'.toml', '.conf', '.lua', '.py', '.sh'}:
             target.write_text(expand(source.read_text(), home))
             shutil.copymode(source, target)
         else:

@@ -4,7 +4,7 @@ order = [ "default" ]
 
     [bar.default]
     background_opacity = 0.68000000000000005
-    border = "outline"
+    border = "outline_variant"
     border_width = 1
     center = [ "clock", "cat" ]
     concave_edge_corners = false
@@ -48,7 +48,7 @@ active_opacity = 1.0
 active_scale = 1.0
 auto_hide = false
 background_opacity = 0.0
-border = "outline"
+border = "outline_variant"
 border_width = 0.0
 concave_edge_corners = false
 cross_axis_padding = 0
@@ -63,7 +63,7 @@ magnification = false
 main_axis_padding = 6
 margin_edge = 8
 margin_ends = 10
-pinned = [ "kitty", "app.zen_browser.zen", "org.kde.dolphin" ]
+pinned = [ "kitty", "app.zen_browser.zen", "dev.noctalia.luciole" ]
 position = "bottom"
 radius = 12
 radius_bottom_left = 12
@@ -146,7 +146,7 @@ umbriel_overview_type_to_launch_enabled = true
 
     [shell.launcher]
     app_grid = false
-    pinned = [ "kitty", "app.zen_browser.zen", "org.kde.dolphin" ]
+    pinned = [ "kitty", "app.zen_browser.zen", "dev.noctalia.luciole" ]
     sort_by_usage = true
 
     [shell.panel]
@@ -189,6 +189,10 @@ wallpaper_scheme = "dysfunctional"
         input_path = "templates/mango/colors.conf"
         output_path = "$XDG_CONFIG_HOME/mango/noctalia-colors.conf"
         post_hook = "mmsg dispatch reload_config || true"
+
+        [theme.templates.user.luciole]
+        input_path = "/usr/share/luciole/templates/colors.toml"
+        output_path = "$XDG_CONFIG_HOME/luciole/colors.toml"
 
         [theme.templates.user.neovim]
         input_path = "templates/neovim/palette.lua"
@@ -261,7 +265,7 @@ type = "custom_button"
 
 [widget.workspaces]
 active_pill_size = 1.3
-empty_color = "surface_variant"
+empty_color = "surface_container"
 focused_color = "primary"
 hide_when_empty = true
 label_source = "id"

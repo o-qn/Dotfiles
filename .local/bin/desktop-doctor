@@ -49,7 +49,7 @@ target="${1:-$(detect_compositor)}"
 printf '\033[38;2;122;162;247mDESKTOP CHECK (%s)\033[0m\n\n' "$target"
 case "$target" in
     umbriel)
-        for app in umbriel noctalia python3 kitty dolphin qt6ct umbriel-ctl umbriel-toggle-vrr umbriel-watcher; do
+        for app in umbriel noctalia python3 kitty luciole loupe qt6ct umbriel-ctl umbriel-toggle-vrr umbriel-watcher; do
             check_app "$app"
         done
         check_service "xdg-desktop-portal-umbriel.service"
@@ -67,10 +67,10 @@ case "$target" in
         fi
         ;;
     niri)
-        for app in niri noctalia python3 kitty dolphin qt6ct; do check_app "$app"; done
+        for app in niri noctalia python3 kitty luciole loupe qt6ct; do check_app "$app"; done
         ;;
     hyprland|hypr)
-        for app in Hyprland hyprctl noctalia python3 kitty dolphin qt6ct; do check_app "$app"; done
+        for app in Hyprland hyprctl noctalia python3 kitty luciole loupe qt6ct; do check_app "$app"; done
         ;;
     *)
         printf 'Usage: desktop-doctor [umbriel|niri|hyprland]\n' >&2
