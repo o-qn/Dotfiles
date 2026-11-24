@@ -1,6 +1,6 @@
 # Desktop dotfiles
 
-Umbriel (main window manager) · Noctalia 5 · Niri 26 · Hyprland 0.56 · Kitty · Fish · Dolphin · Gwenview · Zen · LazyVim.
+Umbriel (main window manager) · Noctalia 5 · Niri 26 · Hyprland 0.56 · Kitty · Fish · Luciole · Loupe · Zen · LazyVim.
 Requires Python 3.11+, Node.js, and the desktop apps installed.
 
 ```bash
@@ -29,7 +29,7 @@ Desktop configs are deployed to `~/.config/` and `~/.local/` via `python3 instal
   - **Screencast submap (`Super+Alt+S`)**: `o` share output, `w` share window, `f` follow window, `m` follow output, `p` stop following, `x` clear (`Esc`/`Enter`/`q` exits).
 - **Diagnostics & Shortcuts**: `Super+Shift+R` validates and reloads (`desktop-reload`), `Super+Ctrl+Q` runs live compositor/display pipeline diagnostics (`desktop-doctor`), `Super+F1` searches keybinds (`desktop-shortcuts`), and `Super+Shift+/` toggles Umbriel's built-in cheatsheet.
 - **Shell, Prompt & Network**: Fish shell (`.config/fish/`) with Fisher, Tide prompt, Fastfetch, and `net-toggle` (`Super+U` / `net-tune` / `net-reset` / `net-status`) for CAKE bufferbloat tuning.
-- **Theming**: `scripts/apply-theme.sh` wires Dolphin, Gwenview, EasyEffects, and Noctalia's palette.
+- **Theming & Defaults**: `scripts/apply-theme.sh` renders Noctalia palettes (including Luciole `colors.toml` and GTK4 for Loupe) and sets Luciole (`inode/directory` + FileChooser portal) and Loupe (`image/*`) as system defaults.
 - **External-monitor brightness**: `bash scripts/setup-brightness.sh` (sudo required).
 - **Bongo Cat keyboard mode**: `bash scripts/setup-noctalia-plugins.sh` (sudo required).
 - **Scheduled system snapshots**: `bash scripts/setup-snapper.sh` (sudo required).
